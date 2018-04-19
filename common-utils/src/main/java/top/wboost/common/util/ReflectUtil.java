@@ -1,0 +1,235 @@
+package top.wboost.common.util;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.util.Assert;
+
+import top.wboost.common.log.entity.Logger;
+import top.wboost.common.log.util.LoggerUtil;
+
+/**
+ * 反射工具类
+ * @className ReflectUtil
+ * @author jwSun
+ * @date 2017年6月30日 上午11:36:09
+ * @version 1.0.0
+ */
+public class ReflectUtil {
+
+    enum MethodPrefix {
+        get, set
+    }
+
+    private static Logger log = LoggerUtil.getLogger(ReflectUtil.class);
+
+    /**
+     * 获得泛型类型
+     * @param obj  存在泛型的类
+     * @param index 第几个泛型
+     * @return 泛型类
+     */
+    public static Class<?> getGenericInterfaces(Class<?> clazz, int index) {
+        Type[] type = ((ParameterizedType) clazz.getGenericSuperclass()).getActualTypeArguments();
+        return (Class<?>) type[index];
+    }
+
+    /**
+     * 获得属性的读方法
+     * @author jwSun
+     * @date 2017年3月29日 上午9:40:50
+     * @param clazz 类
+     * @param fieldName 属性名
+     * @return 读方法
+     */
+    public static Method getReadMethod(Class<?> clazz, String fieldName) {
+        try {
+            Assert.notNull(fieldName);
+            char cha = Character.toUpperCase(fieldName.charAt(0));
+            //获得方法后名称
+            String methodName = MethodPrefix.get + String.valueOf(cha) + fieldName.substring(1);
+            return findMethod(clazz, methodName);
+        } catch (Exception e) {
+            log.info("getReadMethod ERROR: {}", e.getLocalizedMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 获得类的所有读方法
+     * @param clazz  要获取的类
+     * @return 读方法集合
+     */
+    public static List<Method> getAllReadMethod(Class<?> clazz, String... ignoreFieldNames) {
+        List<Method> methodList = new ArrayList<>();
+        try {
+            Field[] fields = findFields(clazz);
+            Set<String> set = null;
+            if (ignoreFieldNames != null && ignoreFieldNames.length > 0) {
+                set = new HashSet<>();
+                Collections.addAll(set, ignoreFieldNames);
+            }
+            for (Field field : fields) {
+                if ("serialVersionUID".equals(field.getName()))
+                    continue;
+                if (set == null || set.contains(field.getName())) {
+                    Method readMethod = ReflectUtil.getReadMethod(clazz, field.getName());
+                    if (readMethod == null)
+                        continue;
+                    methodList.add(readMethod);
+                }
+            }
+        } catch (Exception e) {
+            log.info("getAllReadMethod ERROR: {}", e.getLocalizedMessage());
+        }
+        return methodList;
+    }
+
+    /**
+     * 获得属性的set方法
+     * @date 2017年3月29日 上午9:41:13
+     * @param clazz   要获取的类
+     * @param fieldName 属性名
+     * @return 写方法
+     */
+    public static Method getWriteMethod(Class<?> clazz, String fieldName) {
+        try {
+            Assert.notNull(fieldName);
+            Field f = findField(clazz, fieldName);
+            char cha = Character.toUpperCase(fieldName.charAt(0));
+            //获得方法后名称
+            String methodName = MethodPrefix.set + String.valueOf(cha) + fieldName.substring(1);
+            return findMethod(clazz, methodName, f.getType());
+        } catch (Exception e) {
+            log.info("getWriteMethod ERROR: {}", e.getLocalizedMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 根据类的读方法获取写方法
+     * @param clazz   要获取的类
+     * @param method 对应的读方法
+     * @return 对应的写方法
+     */
+    public static Method getWriteMethodByRead(Class<?> clazz, Method method) {
+        try {
+            Assert.notNull(clazz);
+            Assert.notNull(method);
+            String methodName = method.getName();
+            if (methodName.startsWith(MethodPrefix.get.toString())) {
+                String fieldName = methodName.substring(3);
+                char cha = Character.toLowerCase(fieldName.charAt(0));
+                return getWriteMethod(clazz, String.valueOf(cha) + fieldName.substring(1));
+            }
+        } catch (Exception e) {
+            log.info("getWriteMethod ERROR: {}", e.getLocalizedMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 获得类的所有写方法
+     * @param clazz   要获取的类
+     * @return 写方法集合
+     */
+    public static List<Method> getAllWriteMethod(Class<?> clazz, String... ignoreFieldNames) {
+        List<Method> methodList = new ArrayList<>();
+        try {
+            Field[] fields = findFields(clazz);
+            Set<String> set = null;
+            if (ignoreFieldNames != null && ignoreFieldNames.length > 0) {
+                set = new HashSet<>();
+                Collections.addAll(set, ignoreFieldNames);
+            }
+            for (Field field : fields) {
+                if ("serialVersionUID".equals(field.getName()))
+                    continue;
+                if (set == null || set.contains(field.getName())) {
+                    Method readMethod = ReflectUtil.getWriteMethod(clazz, field.getName());
+                    if (readMethod == null)
+                        continue;
+                    methodList.add(readMethod);
+                }
+            }
+        } catch (Exception e) {
+            log.info("getAllWriteMethod ERROR: {}", e.getLocalizedMessage());
+        }
+        return methodList;
+    }
+
+    /**
+     * 新建对象
+     * @param clazz 新建对象class
+     * @return 对象
+     */
+    public static <T> T newInstance(Class<T> clazz) {
+        if (clazz == null) {
+            String msg = "Class method parameter cannot be null.";
+            throw new IllegalArgumentException(msg);
+        }
+        try {
+            return clazz.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to instantiate class [" + clazz.getName() + "]", e);
+        }
+    }
+
+    public static Field findField(Class<?> type, String fieldName) {
+        Assert.notNull(type, "type must not be null!");
+        Assert.notNull(fieldName, "fieldName must not be null!");
+        Class<?> targetClass = type;
+        Field foundField = null;
+        while (targetClass != Object.class) {
+            try {
+                foundField = targetClass.getDeclaredField(fieldName);
+            } catch (Exception e) {
+                //ignore
+            }
+            if (foundField != null) {
+                break;
+            }
+            targetClass = targetClass.getSuperclass();
+        }
+        return foundField;
+    }
+
+    public static Method findMethod(Class<?> type, String methodName, Class<?>... classes) {
+        Assert.notNull(type, "type must not be null!");
+        Assert.notNull(methodName, "fieldName must not be null!");
+        Class<?> targetClass = type;
+        Method foundMethod = null;
+        while (targetClass != Object.class) {
+            try {
+                foundMethod = targetClass.getDeclaredMethod(methodName, classes);
+            } catch (Exception e) {
+                //ignore
+            }
+            if (foundMethod != null) {
+                break;
+            }
+            targetClass = targetClass.getSuperclass();
+        }
+        return foundMethod;
+    }
+
+    public static Field[] findFields(Class<?> type) {
+        Assert.notNull(type, "type must not be null!");
+        Class<?> targetClass = type;
+        List<Field> fieldList = new ArrayList<>();
+        while (targetClass != Object.class) {
+            fieldList.addAll(Arrays.asList(targetClass.getDeclaredFields()));
+            targetClass = targetClass.getSuperclass();
+        }
+        return fieldList.toArray(new Field[fieldList.size()]);
+    }
+
+}

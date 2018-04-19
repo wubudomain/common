@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>top.wboost</groupId>
+		<artifactId>common</artifactId>
+		<version>3.0-SNAPSHOT</version>
+	</parent>
+	<artifactId>common-netty</artifactId>
+	<name>common-netty</name>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<netty.version>4.1.19.Final</netty.version>
+		<jboss-marshalling.version>2.0.2.Final</jboss-marshalling.version>
+	</properties>
+	<dependencies>
+
+		<dependency>
+			<groupId>${project-group-id}</groupId>
+			<version>${project-group-version}</version>
+			<artifactId>common-web</artifactId>
+			<scope>compile</scope>
+		</dependency>
+		
+		<dependency>
+		    <groupId>io.netty</groupId>
+		    <artifactId>netty-all</artifactId>
+		    <version>${netty.version}</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.jboss.marshalling</groupId>
+		    <artifactId>jboss-marshalling-river</artifactId>
+		    <version>${jboss-marshalling.version}</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.jboss.marshalling</groupId>
+		    <artifactId>jboss-marshalling</artifactId>
+		    <version>${jboss-marshalling.version}</version>
+		</dependency>
+
+	</dependencies>
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/java</directory>
+				<includes>
+					<include>**/*.xsd</include>
+				</includes>
+				<filtering>false</filtering>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>META-INF/**</include>
+				</includes>
+				<filtering>false</filtering>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>common-netty-config/**</include>
+				</includes>
+				<filtering>false</filtering>
+			</resource>
+		</resources>
+		<plugins>
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<artifactId>maven-source-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>

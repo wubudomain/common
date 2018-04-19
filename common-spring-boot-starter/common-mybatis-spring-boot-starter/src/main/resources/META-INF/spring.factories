@@ -1,0 +1,10 @@
+# Add Application Context Initializers by jwsun
+org.springframework.context.ApplicationContextInitializer=\
+top.wboost.boot.configuration.datasource.mybatis.spring.boot.starter.ConfigForMultipleMybatisDataSourceInitializer
+
+#exclude MybatisAutoConfiguration
+org.springframework.boot.autoconfigure.AutoConfigurationImportFilter=\
+top.wboost.boot.configuration.datasource.mybatis.spring.boot.starter.MultipleMybatisDataSourceOnClassCondition
+
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+top.wboost.boot.configuration.datasource.mybatis.spring.boot.starter.MybatisMultipleAutoConfiguration

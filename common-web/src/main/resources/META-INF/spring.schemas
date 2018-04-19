@@ -1,0 +1,5 @@
+http\://www.wboost.top/extends/spring/schema/data/jpa/wboost-spring-jpa.xsd=top/wboost/common/extend/data/jpa/repository/support/wboost-spring-jpa.xsd
+http\://www.wboost.top/extends/spring/schema/data/repository/wboost-spring-repository.xsd=top/wboost/common/extend/data/jpa/repository/support/wboost-spring-repository.xsd
+http\://www.wboost.top/extends/spring/schema/data/jpa/wboost-spring-jpa.xsd=top/wboost/common/extend/data/jpa/repository/support/wboost-spring-jpa.xsd
+http\://www.wboost.top/extends/spring/schema/data/repository/wboost-spring-repository.xsd=top/wboost/common/extend/data/jpa/repository/support/wboost-spring-repository.xsd
+http\://www.wboost.top/extends/spring/schema/context/spring-context.xsd=top/wboost/common/context/config/wboost-spring-context-4.3.xsd

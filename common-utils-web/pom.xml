@@ -1,0 +1,115 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>top.wboost</groupId>
+    <artifactId>common</artifactId>
+    <version>3.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>common-utils-web</artifactId>
+  
+  <properties>
+  		<hibernate.version>5.0.11.Final</hibernate.version>
+		<hibernate-validator.version>5.1.1.Final</hibernate-validator.version>
+		<druid.version>1.0.28</druid.version>
+		<oracle.version>11.2</oracle.version>
+		<mysql-connector-java.version>5.1.5</mysql-connector-java.version>
+		<org.mybatis.version>3.2.7</org.mybatis.version>
+		<org.mybatis-spring.version>1.2.2</org.mybatis-spring.version>
+		<spring.version>4.3.13.RELEASE</spring.version>
+		<jxl.version>2.6.12</jxl.version>
+  </properties>
+  
+  <dependencies>
+  		<dependency>
+			<groupId>${project-group-id}</groupId>
+			<version>${project-group-version}</version>
+			<artifactId>common-exception</artifactId>
+			<scope>compile</scope>
+		</dependency>
+		
+  		<dependency>
+			<groupId>${project-group-id}</groupId>
+			<version>${project-group-version}</version>
+			<artifactId>common-utils</artifactId>
+			<scope>compile</scope>
+		</dependency>
+
+		<!-- servlet -->
+		<dependency>
+			<groupId>org.glassfish</groupId>
+			<artifactId>javax.servlet</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish</groupId>
+			<artifactId>javax.servlet.jsp</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+		</dependency>
+		<!-- servlet -->
+
+		<!-- json -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+		<!-- /json -->
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-entitymanager</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>org.hibernate</groupId>
+		    <artifactId>hibernate-validator</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+		</dependency>
+
+		<!-- poi -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>${org.apache.poi.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sourceforge.jexcelapi</groupId>
+			<artifactId>jxl</artifactId>
+			<version>${jxl.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- /poi -->
+
+		<!-- dataSource -->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>druid</artifactId>
+			<version>${druid.version}</version>
+		</dependency>
+		<!-- /dataSource -->
+		
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+			</plugin>
+			<plugin>
+		          <artifactId>maven-source-plugin</artifactId>
+		    </plugin>
+		</plugins>
+	</build>
+</project>
