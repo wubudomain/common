@@ -1,51 +1,41 @@
-文件结构
+文档完善中。。。
+
 |common:通用管理项目
 
+//基础包
+|+common-base:项目基础包
+|+common-exception:通用异常包
+|+common-log:通用日志包
 |+common-utils:通用工具类包
+|+common-utils-web:通用web项目处理工具类
+|+common-utils-web:通用web项目整合
 
-|+common-log:通用日志传输包
+//spring-boot相关
+|+common-boot:spring-boot快速整合配置包
+|+common-spring-boot-starter:常用操作自动配置包
+|++common-base-spring-boot-starter:常用操作自动配置基础包
+|++common-datasource-spring-boot-starter:多数据源自动注册配置包
+|++common-mybatis-spring-boot-starter:集成mybatis/tkmapper/pagehelper多数据源自动配置包
 
-|+common-web:网络通用工具类基础包
+//大数据组件调用相关
+|+common-kylin:通用kylin查询处理包
+|++commonl-kylin-support-repository:仿jpa注册接口快速sql查询kylin包
 
-|+common-cache:通用缓存包
-
-|+common-distributed:通用分布式处理包
-
-|+common-es:通用es处理包
+|+common-es:通用ElasticSearch查询处理包
 |++common-es-tools v1.4.2:通用es处理包V1.4.2版本
 |++common-es-tools v2.4.1:通用es处理包V2.4.1版本
 
-|+common-message-queue:通用消息队列包
-|++common-message-queue-base:通用消息队列基础包
-|++common-message-queue-activemq:通用activemq消息队列包
-|++common-message-queue-redis:通用redis消息队列包
+//常用工具整合包
+|+common-sql:java代码生成sql语句包
+|+common-netty:netty处理包
 
+|+common-message-queue:消息队列处理包
+|++common-message-queue-activemq:activemq消息队列处理包
+|++common-message-queue-redis:redis消息队列处理包
 
-依赖结构
-|common-web
-|-common-log
+|+common-map-geohash:地图参数处理包(转)
 
-|common-log
-|-common-utils
-
-|common-cache
-|-common-web
-
-|common-distributed
-|-common-cache
-
-|common-es
-|-common-web
-
-|common-message-queue-base
-|-common-web
-
-|common-message-queue-redis
-|-common-message-queue-base
-|-common-cache
-
-|common-message-queue-activemq
-|-common-message-queue-base
-
-
-
+|+common-boost:快速注册接口查询数据库包
+|+common-cache:缓存包
+|+common-distributed:分布式处理包
+|+common-context:上下文注册相关处理,代理类处理包
