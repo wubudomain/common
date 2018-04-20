@@ -20,7 +20,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 import top.wboost.common.base.annotation.AutoWebApplicationConfig;
 import top.wboost.common.base.entity.ResultEntity;
-import top.wboost.common.base.service.BaseJpaService;
+import top.wboost.common.base.service.BaseService;
 import top.wboost.common.util.CopyUtil;
 import top.wboost.common.util.ReflectUtil;
 import top.wboost.common.util.StringUtil;
@@ -60,7 +60,7 @@ public class ResultAutoBoostHandlerMapping implements EzWebApplicationListener {
             requestMethod.setControllerClass((Class<Object>) beanType);
             requestMethod.setControllerName(beanType.getName());
             inspectName = StringUtil.getByLowerBegin(inspectName);
-            BaseJpaService<Object, Serializable> service = getServiceByInspectName(inspectName);
+            BaseService<Object, Serializable> service = getServiceByInspectName(inspectName);
             requestMethod.setService(service);
             requestMethod.setServiceClass((Class<Object>) ClassUtils.getUserClass(service));
             Class<?> entityClass = ReflectUtil.getGenericInterfaces(requestMethod.getServiceClass(), 0);
@@ -127,8 +127,8 @@ public class ResultAutoBoostHandlerMapping implements EzWebApplicationListener {
     }
 
     @SuppressWarnings("unchecked")
-    private BaseJpaService<Object, Serializable> getServiceByInspectName(String inspectName) {
-        return (BaseJpaService<Object, Serializable>) SpringBeanUtil.getBean(inspectName + "Service");
+    private BaseService<Object, Serializable> getServiceByInspectName(String inspectName) {
+        return (BaseService<Object, Serializable>) SpringBeanUtil.getBean(inspectName + "Service");
     }
 
 }
