@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.util.Assert;
 
@@ -229,7 +230,10 @@ public class ReflectUtil {
             fieldList.addAll(Arrays.asList(targetClass.getDeclaredFields()));
             targetClass = targetClass.getSuperclass();
         }
-        return fieldList.toArray(new Field[fieldList.size()]);
+        List<Field> result = fieldList.stream().filter(field -> {
+            return !field.getName().equals("serialVersionUID");
+        }).collect(Collectors.toList());
+        return result.toArray(new Field[result.size()]);
     }
 
 }

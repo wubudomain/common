@@ -219,7 +219,7 @@ public class ExplainAspect implements Ordered, EzWebApplicationListener {
                 //如果是则检查是否有@Explain注解,如没有则抛出异常，启动失败。
                 Explain explain = doMethod.getDeclaredAnnotation(Explain.class);
                 if (explain == null) {
-                    throw new SystemCodeException(SystemCode.NO_EXPLAIN, "method:" + doMethod);
+                    throw new SystemCodeException(SystemCode.NO_EXPLAIN, "方法未使用@Explain注解!请检查。method:" + doMethod);
                 }
             }
         }
