@@ -42,8 +42,6 @@ public class MybatisAutoMultipleConfigurationBean {
 
     @Autowired
     private DefaultListableBeanFactory beanFactory;
-    @Autowired
-    private List<DataSource> dataSources;
 
     /**dsName:MultipleConfiguration**/
     private Map<String, MultipleConfiguration> mybatisAutoConfiguration = new HashMap<>();
@@ -53,7 +51,7 @@ public class MybatisAutoMultipleConfigurationBean {
     private Map<String, SqlSessionFactory> sqlSessionFactorys = new HashMap<>();
     private Map<String, SqlSessionTemplate> sqlSessionTemplates = new HashMap<>();
 
-    public MybatisAutoMultipleConfigurationBean(MybatisMultipleProperties properties,
+    public MybatisAutoMultipleConfigurationBean(List<DataSource> dataSources, MybatisMultipleProperties properties,
             ObjectProvider<Interceptor[]> interceptorsProvider, ResourceLoader resourceLoader,
             ObjectProvider<DatabaseIdProvider> databaseIdProvider,
             ObjectProvider<List<tk.mybatis.mapper.autoconfigure.ConfigurationCustomizer>> configurationCustomizersProvider) {
@@ -71,6 +69,9 @@ public class MybatisAutoMultipleConfigurationBean {
             }
             MybatisProperties cpProperties = ConvertUtil
                     .mapConvertToBean(ConvertUtil.beanConvertToMap(mybatisProperties), MybatisProperties.class);
+            if ("sqlSessionTemplate".equals(sqlSessionTemplateName) || "primary".equals(sqlSessionTemplateName)) {
+                mybatisProperties.setSqlSessionFactoryName("sqlSessionFactory");
+            }
             MultipleConfiguration config = new MultipleConfiguration(
                     sqlSessionTemplateName, new MapperAutoConfiguration(cpProperties, interceptorsProvider,
                             resourceLoader, databaseIdProvider, configurationCustomizersProvider),
@@ -110,7 +111,7 @@ public class MybatisAutoMultipleConfigurationBean {
             this.dataSourceName = dataSourceName;
             this.properties = properties;
             this.sqlSessionFactoryName = StringUtil.notEmpty(properties.getSqlSessionFactoryName())
-                    ? properties.getSqlSessionFactoryName() : "sqlSessionFactory";
+                    ? properties.getSqlSessionFactoryName() : "sqlSessionFactory" + "_" + dataSourceName;
         }
 
     }
@@ -120,7 +121,7 @@ public class MybatisAutoMultipleConfigurationBean {
         if (this.mybatisAutoConfiguration.size() == 0) {
             return;
         }
-        String[] dataSources = this.beanFactory.getBeanNamesForType(DataSource.class);
+        String[] dataSources = this.beanFactory.getBeanNamesForType(DataSource.class, true, false);
         Set<String> dsNames = new HashSet<String>(Arrays.asList(dataSources));
         Set<String> dsAndAliasNames = new HashSet<String>(Arrays.asList(dataSources));
         dsAndAliasNames.addAll(dsNames);

@@ -40,7 +40,7 @@ public class BaseMybatisServiceImpl<T, Mapper extends tk.mybatis.mapper.common.M
 
     @Override
     public T save(T t) {
-        mapper.insert(t);
+        mapper.insertSelective(t);
         return t;
     }
 
