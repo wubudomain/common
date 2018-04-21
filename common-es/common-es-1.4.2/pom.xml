@@ -5,7 +5,7 @@
     <artifactId>common-es</artifactId>
     <version>0.0.3-SNAPSHOT</version>
   </parent>
-  <artifactId>common-es-tools</artifactId>
+  <artifactId>common-es-tools-old</artifactId>
   <version>1.4.2.3-SNAPSHOT</version>
   <build>
 		<plugins>

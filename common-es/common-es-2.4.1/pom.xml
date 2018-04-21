@@ -3,9 +3,9 @@
   <parent>
     <groupId>top.wboost</groupId>
     <artifactId>common-es</artifactId>
-    <version>3.0-SNAPSHOT</version>
+    <version>3.0.RELEASE</version>
   </parent>
-  <artifactId>common-es-tools</artifactId>
+  <artifactId>common-es-2.4.1</artifactId>
   <build>
 		<plugins>
 			<plugin>
