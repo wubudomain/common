@@ -1,27 +1,41 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>top.wboost</groupId>
-    <artifactId>common</artifactId>
-    <version>3.0.RELEASE</version>
-  </parent>
-  <artifactId>common-context</artifactId>
-  <dependencies>
-  <dependency>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>top.wboost</groupId>
+		<artifactId>common</artifactId>
+		<version>3.0.RELEASE</version>
+	</parent>
+	<artifactId>common-context</artifactId>
+	<dependencies>
+		<dependency>
 			<groupId>${project-group-id}</groupId>
 			<version>${project-group-version}</version>
 			<artifactId>common-utils-web</artifactId>
 			<scope>compile</scope>
 		</dependency>
-  </dependencies>
+	</dependencies>
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/java</directory>
+				<includes>
+					<include>**/*.xsd</include>
+					<include>**/*.xml</include>
+				</includes>
+				<filtering>false</filtering>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<artifactId>maven-resources-plugin</artifactId>
 			</plugin>
 			<plugin>
-		          <artifactId>maven-source-plugin</artifactId>
-		    </plugin>
+				<artifactId>maven-source-plugin</artifactId>
+			</plugin>
 		</plugins>
 	</build>
 </project>
