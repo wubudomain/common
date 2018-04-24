@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>top.wboost</groupId>
 		<artifactId>common</artifactId>
-		<version>3.1.RELEASE</version>
+		<version>3.1.1RELEASE</version>
 	</parent>
 	<artifactId>common-boost</artifactId>
 	<name>common-boost</name>

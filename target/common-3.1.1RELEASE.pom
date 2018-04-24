@@ -5,7 +5,7 @@
 	<artifactId>common</artifactId>
 	<packaging>pom</packaging>
 	<name>common</name>
-	<version>3.1.RELEASE</version>
+	<version>3.1.1RELEASE</version>
 	<description>project auto plugins</description>
 	<url>http://www.wboost.top</url>
 	<developers>
@@ -52,7 +52,7 @@
 
 		<!-- postss -->
 		<project-group-id>top.wboost</project-group-id>
-		<project-group-version>3.1.RELEASE</project-group-version>
+		<project-group-version>3.1.1RELEASE</project-group-version>
 		<!-- /postss -->
 
 		<!-- config -->

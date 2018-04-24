@@ -11,6 +11,8 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.annotation.Order;
 
+import com.alibaba.druid.spring.boot.autoconfigure.DruidDataSourceAutoConfigure;
+
 /**
  * 配置使用JPA或MYBATIS
  * @className OrmChooseAutoConfigurationImportFilter
@@ -34,6 +36,7 @@ public class OrmChooseAutoConfigurationImportFilter implements AutoConfiguration
                 excludes.add(HibernateJpaAutoConfiguration.class.getName());
                 excludes.add(JpaRepositoriesAutoConfiguration.class.getName());
             }
+            excludes.add(DruidDataSourceAutoConfigure.class.getName());
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
