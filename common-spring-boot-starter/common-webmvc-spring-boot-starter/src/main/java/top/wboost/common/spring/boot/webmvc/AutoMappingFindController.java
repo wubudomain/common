@@ -68,7 +68,7 @@ public class AutoMappingFindController implements InitializingBean {
                 requestMappingInfoSimple.put("consumesCondition", requestMappingInfo.getConsumesCondition());
             }
             if (!requestMappingInfo.getHeadersCondition().isEmpty()) {
-                requestMappingInfoSimple.put("HeadersCondition", requestMappingInfo.getHeadersCondition());
+                requestMappingInfoSimple.put("headersCondition", requestMappingInfo.getHeadersCondition());
             }
             if (!requestMappingInfo.getMethodsCondition().isEmpty()) {
                 requestMappingInfoSimple.put("methodsCondition", requestMappingInfo.getMethodsCondition());
