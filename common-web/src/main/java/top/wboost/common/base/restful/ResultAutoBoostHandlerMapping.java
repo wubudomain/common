@@ -18,6 +18,7 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
+import springfox.documentation.spring.web.DocumentationCache;
 import top.wboost.common.base.annotation.AutoWebApplicationConfig;
 import top.wboost.common.base.entity.ResultEntity;
 import top.wboost.common.base.service.BaseService;
@@ -34,6 +35,8 @@ public class ResultAutoBoostHandlerMapping implements EzWebApplicationListener {
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
     @Autowired
     private AutoRequestMethodInvoke autoRequestMethodInvoke;
+    @Autowired(required = false)
+    private DocumentationCache documentationCache;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -71,6 +74,31 @@ public class ResultAutoBoostHandlerMapping implements EzWebApplicationListener {
         });
     }
 
+    //private CachingOperationNameGenerator cachingOperationNameGenerator = new CachingOperationNameGenerator();
+
+    /**
+     * 在原来Swagger基础之上增加SwaggerDoc
+     * @param mappingInfo
+     * @param requestMethod
+     */
+    private void addSwaggerDocs(RequestMappingInfo mappingInfo, AutoRequestMethod requestMethod) {
+        /*Set<RequestMethod> requestMethods = mappingInfo.getMethodsCondition().getMethods();
+        new ParameterBuilder().type(type)
+        new OperationBuilder(cachingOperationNameGenerator).method(HttpMethod.GET).parameters(parameters);
+        
+        requestMethods.forEach(method -> {
+            new OperationBuilder(cachingOperationNameGenerator).method(HttpMethod.resolve(method.toString())).parameters(parameters)
+            
+        });
+        
+        documentationCache*/
+    }
+
+    /**
+     * 注册方法
+     * @param event
+     * @param requestMethod
+     */
     public void registerMethods(ContextRefreshedEvent event, AutoRequestMethod requestMethod) {
         try {
             Class<?> obj = ClassUtils.getUserClass(autoRequestMethodInvoke);
@@ -118,6 +146,7 @@ public class ResultAutoBoostHandlerMapping implements EzWebApplicationListener {
                         cp.setPath(path);
                         cp.setMethod(m);
                         autoRequestMethodInvoke.addAutoRequestMethod(path, cp);
+                        addSwaggerDocs(mappingInfo, requestMethod);
                     }
                 }
             }
