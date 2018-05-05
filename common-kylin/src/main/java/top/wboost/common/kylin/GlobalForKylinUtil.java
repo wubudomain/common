@@ -2,6 +2,7 @@ package top.wboost.common.kylin;
 
 import top.wboost.common.kylin.entity.Dimension;
 import top.wboost.common.kylin.entity.Measures;
+import top.wboost.common.utils.web.utils.PropertiesUtil;
 
 /**
  * kylin工具所需常量值
@@ -17,16 +18,16 @@ public class GlobalForKylinUtil {
     public static final String KYLIN_SERVER_PASSWORD = "kylin.auth.password";
     public static final String DEFAULT_PROPERTIES_PATH = "properties/kylin.properties";
 
-    /*public static final String kylinUrl = PropertiesUtil.getPropertyOrDefault(KYLIN_SERVER_URL,
+    public static final String kylinUrl = PropertiesUtil.getPropertyOrDefault(KYLIN_SERVER_URL,
             PropertiesUtil.getProperty(KYLIN_SERVER_URL, DEFAULT_PROPERTIES_PATH));
     public static final String kylinUserName = PropertiesUtil.getPropertyOrDefault(KYLIN_SERVER_NAME,
             PropertiesUtil.getProperty(KYLIN_SERVER_NAME, DEFAULT_PROPERTIES_PATH));
     public static final String kylinPassword = PropertiesUtil.getPropertyOrDefault(KYLIN_SERVER_PASSWORD,
-            PropertiesUtil.getProperty(KYLIN_SERVER_PASSWORD, DEFAULT_PROPERTIES_PATH)); */
+            PropertiesUtil.getProperty(KYLIN_SERVER_PASSWORD, DEFAULT_PROPERTIES_PATH));
 
-    public static final String kylinUrl = "http://192.168.51.70:7070/kylin";
+    /*public static final String kylinUrl = "http://192.168.51.70:7070/kylin";
     public static final String kylinUserName = "ADMIN";
-    public static final String kylinPassword = "KYLIN";
+    public static final String kylinPassword = "KYLIN";*/
 
     public interface CubeDescriptor {
         /**维度**/
