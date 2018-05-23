@@ -24,5 +24,6 @@ public class AutoRequestMethod {
     private EnableBaseRestful enableBaseRestful;
     private RequestMappingInfo requestMappingInfo;
     private RequestMapping requestMapping;
+    private AutoRequestMehthodType autoRequestMehthodType;
 
 }

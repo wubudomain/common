@@ -9,8 +9,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -32,7 +33,7 @@ import top.wboost.common.utils.web.interfaces.context.EzWebApplicationListener;
 import top.wboost.common.utils.web.utils.SpringBeanUtil;
 
 @AutoWebApplicationConfig
-public class ResultAutoBoostHandlerMapping implements EzWebApplicationListener, BeanFactoryPostProcessor {
+public class ResultAutoBoostHandlerMapping implements EzWebApplicationListener, BeanFactoryAware {
 
     @Autowired
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
@@ -41,43 +42,26 @@ public class ResultAutoBoostHandlerMapping implements EzWebApplicationListener, 
 
     @Override
     public void onWebApplicationEvent(ContextRefreshedEvent event) {
-        Map<String, AutoRequestMethod> registMethod = autoRequestMethodInvoke.getAutoRequestMethod();
-        registMethod.forEach((path, method) -> {
-            boolean regist = true;
-            for (Entry<RequestMappingInfo, HandlerMethod> entry : requestMappingHandlerMapping.getHandlerMethods()
-                    .entrySet()) {
-                RequestMappingInfo mappingInfo = entry.getKey();
-                if (mappingInfo.getPatternsCondition().getPatterns().contains(path) && mappingInfo.getMethodsCondition()
-                        .getMethods().containsAll(Arrays.asList(method.getRequestMapping().method()))) {
-                    regist = false;
-                    break;
+        Map<String, Map<String, AutoRequestMethod>> registMethod = autoRequestMethodInvoke.getAutoRequestMethod();
+        registMethod.forEach((path, methodMap) -> {
+            methodMap.forEach((method, requestMethod) -> {
+                boolean regist = true;
+                for (Entry<RequestMappingInfo, HandlerMethod> entry : requestMappingHandlerMapping.getHandlerMethods()
+                        .entrySet()) {
+                    RequestMappingInfo mappingInfo = entry.getKey();
+                    if (mappingInfo.getPatternsCondition().getPatterns().contains(path)
+                            && mappingInfo.getMethodsCondition().getMethods()
+                                    .containsAll(Arrays.asList(requestMethod.getRequestMapping().method()))) {
+                        regist = false;
+                        break;
+                    }
                 }
-            }
-            if (regist) {
-                requestMappingHandlerMapping.registerMapping(method.getRequestMappingInfo(), "autoRequestMethodInvoke",
-                        method.getMethod());
-            }
+                if (regist) {
+                    requestMappingHandlerMapping.registerMapping(requestMethod.getRequestMappingInfo(),
+                            "autoRequestMethodInvoke", requestMethod.getMethod());
+                }
+            });
         });
-    }
-
-    //private CachingOperationNameGenerator cachingOperationNameGenerator = new CachingOperationNameGenerator();
-
-    /**
-     * 在原来Swagger基础之上增加SwaggerDoc
-     * @param mappingInfo
-     * @param requestMethod
-     */
-    private void addSwaggerDocs(RequestMappingInfo mappingInfo, AutoRequestMethod requestMethod) {
-        /*Set<RequestMethod> requestMethods = mappingInfo.getMethodsCondition().getMethods();
-        new ParameterBuilder().type(type)
-        new OperationBuilder(cachingOperationNameGenerator).method(HttpMethod.GET).parameters(parameters);
-        
-        requestMethods.forEach(method -> {
-            new OperationBuilder(cachingOperationNameGenerator).method(HttpMethod.resolve(method.toString())).parameters(parameters)
-            
-        });
-        
-        documentationCache*/
     }
 
     /**
@@ -132,7 +116,6 @@ public class ResultAutoBoostHandlerMapping implements EzWebApplicationListener, 
                         cp.setPath(path);
                         cp.setMethod(m);
                         autoRequestMethodInvoke.addAutoRequestMethod(path, cp);
-                        addSwaggerDocs(mappingInfo, requestMethod);
                     }
                 }
             }
@@ -147,8 +130,7 @@ public class ResultAutoBoostHandlerMapping implements EzWebApplicationListener, 
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+    public void initConfig(ConfigurableListableBeanFactory beanFactory) {
         String[] baseRestfule = beanFactory.getBeanNamesForAnnotation(EnableBaseRestful.class);
         Arrays.asList(baseRestfule).forEach(name -> {
             Object controller = beanFactory.getBean(name);
@@ -231,13 +213,23 @@ public class ResultAutoBoostHandlerMapping implements EzWebApplicationListener, 
                         cp.setMethod(m);
                         cp.setRequestMappingInfo(mappingInfo);
                         autoRequestMethodInvoke.addAutoRequestMethod(path, cp);
-                        addSwaggerDocs(mappingInfo, requestMethod);
                     }
                 }
             }
         } catch (SecurityException e1) {
             e1.printStackTrace();
         }
+    }
+
+    /*@Override
+    public void afterPropertiesSet() throws Exception {
+        ApplicationContext context = SpringBeanUtil.getApplicationContext();
+        initConfig((ConfigurableListableBeanFactory) SpringBeanUtil.getApplicationContext());
+    }*/
+
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        initConfig((ConfigurableListableBeanFactory) beanFactory);
     }
 
 }

@@ -28,24 +28,29 @@ import top.wboost.common.utils.web.utils.HibernateUtil;
 public class AutoRequestMethodInvoke {
 
     private PathMatcher pathMatcher = new AntPathMatcher();
-    private Map<String, AutoRequestMethod> autoMehotdMap = new ConcurrentHashMap<>();
+    /** path : (requestMethod:value)**/
+    private Map<String, Map<String, AutoRequestMethod>> autoMehotdMap = new ConcurrentHashMap<>();
 
     public void addAutoRequestMethod(String path, AutoRequestMethod method) {
-        this.autoMehotdMap.put(path, method);
+        if (this.autoMehotdMap.get(path) == null) {
+            this.autoMehotdMap.put(path, new ConcurrentHashMap<>());
+        }
+        this.autoMehotdMap.get(path).put(method.getRequestMapping().method()[0].toString(), method);
+
     }
 
-    public Map<String, AutoRequestMethod> getAutoRequestMethod() {
+    public Map<String, Map<String, AutoRequestMethod>> getAutoRequestMethod() {
         return this.autoMehotdMap;
     }
 
     private AutoRequestMethod getRequestMethod(HttpServletRequest request) {
         String url = request.getRequestURI().substring(request.getContextPath().length(),
                 request.getRequestURI().length());
-        Iterator<Entry<String, AutoRequestMethod>> iterator = this.autoMehotdMap.entrySet().iterator();
+        Iterator<Entry<String, Map<String, AutoRequestMethod>>> iterator = this.autoMehotdMap.entrySet().iterator();
         while (iterator.hasNext()) {
-            Entry<String, AutoRequestMethod> entry = iterator.next();
+            Entry<String, Map<String, AutoRequestMethod>> entry = iterator.next();
             if (pathMatcher.match(entry.getKey(), url)) {
-                return entry.getValue();
+                return entry.getValue().get(request.getMethod().toUpperCase());
             }
         }
         return null;
