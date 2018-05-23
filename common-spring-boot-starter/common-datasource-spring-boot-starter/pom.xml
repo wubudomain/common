@@ -5,14 +5,14 @@
   <parent>
     <groupId>top.wboost</groupId>
     <artifactId>common-spring-boot-starter</artifactId>
-    <version>3.1.1RELEASE</version>
+    <version>3.1.2-SNAPSHOT</version>
   </parent>
   <artifactId>common-datasource-spring-boot-starter</artifactId>
   <name>common-datasource-spring-boot-starter</name>
   <properties>
   		<!-- chinaoly -->
 		<project-group-id>top.wboost</project-group-id>
-		<project-group-version>3.1.1RELEASE</project-group-version>
+		<project-group-version>3.1.2-SNAPSHOT</project-group-version>
 		<!-- /chinaoly -->
 
 		<!-- config -->

@@ -4,7 +4,7 @@
   <parent>
     <groupId>top.wboost</groupId>
     <artifactId>common</artifactId>
-    <version>3.1.1RELEASE</version>
+    <version>3.1.2-SNAPSHOT</version>
   </parent>
   <packaging>pom</packaging>
   <artifactId>common-spring-boot-starter</artifactId>
@@ -16,5 +16,7 @@
     <module>common-base-spring-boot-starter</module>
     <module>common-datasource-spring-boot-starter</module>
     <module>common-mybatis-spring-boot-starter</module>
+    <module>common-webmvc-spring-boot-starter</module>
+    <module>common-swagger-spring-boot-starter</module>
   </modules>
 </project>

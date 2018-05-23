@@ -1,4 +1,4 @@
-package top.wboost.common.spring.boot.webmvc;
+package top.wboost.common.spring.boot.swagger;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,11 +12,14 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 import top.wboost.common.annotation.Explain;
+import top.wboost.common.base.entity.ResultEntity;
 import top.wboost.common.base.page.QueryPage;
+import top.wboost.common.spring.boot.swagger.template.QueryPageTemplate;
+import top.wboost.common.spring.boot.swagger.template.ResultEntityTemplate;
 
 @Configuration
 @EnableSwagger2
-public class Swagger2 {
+public class Swagger2Config {
 
     @Bean
     public Docket createRestApi() {
@@ -27,8 +30,7 @@ public class Swagger2 {
                 .useDefaultResponseMessages(false)
                 /**alternateTypeRules**/
                 .alternateTypeRules(AlternateTypeRules.newRule(QueryPage.class, QueryPageTemplate.class))
-                /**genericModelSubstitutes**/
-                //.genericModelSubstitutes(ResultEntity.class)
+                .alternateTypeRules(AlternateTypeRules.newRule(ResultEntity.class, ResultEntityTemplate.class))
                 /**select**/
                 .select()
                 /**apis**/
@@ -38,8 +40,8 @@ public class Swagger2 {
     }
 
     private ApiInfo apiInfo() {
-        return new ApiInfoBuilder().title("测试").description("详情").termsOfServiceUrl("http://www.wboost.top/")
-                .version("1.0").build();
+        return new ApiInfoBuilder().title("quick plugin").description("quick plugin")
+                .termsOfServiceUrl("http://www.wboost.top/").version("1.0").build();
     }
 
 }

@@ -222,6 +222,21 @@ public class ReflectUtil {
         return foundMethod;
     }
 
+    public static Method[] findMethods(Class<?> type) {
+        Assert.notNull(type, "type must not be null!");
+        Class<?> targetClass = type;
+        List<Method> methodList = new ArrayList<>();
+        while (targetClass != Object.class) {
+            try {
+                methodList.addAll(Arrays.asList(targetClass.getDeclaredMethods()));
+                targetClass = targetClass.getSuperclass();
+            } catch (Exception e) {
+                //ignore
+            }
+        }
+        return methodList.toArray(new Method[methodList.size()]);
+    }
+
     public static Field[] findFields(Class<?> type) {
         Assert.notNull(type, "type must not be null!");
         Class<?> targetClass = type;

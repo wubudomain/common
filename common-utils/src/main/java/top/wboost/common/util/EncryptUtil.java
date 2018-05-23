@@ -135,4 +135,15 @@ public class EncryptUtil {
     public static String encode(String plainText) {
         return md5(plainText);
     }
+
+    /*public static void main(String[] args) throws Exception {
+        RsaKey key = initRsaKey();
+        String str = "i love zzz吱吱吱";
+        System.out.println(key.getPublicKeyStr());
+        System.out.println(key.getPrivateKeyStr());
+        String encode = encodeBase64(rsaEncrypt(str.getBytes(), key.getPublicKey(), key.getCipher()));
+        System.out.println(encode);
+        String decode = new String(rsaDecrypt(encode.getBytes(), key.getPrivateKey(), key.getCipher()));
+        System.out.println(decode);
+    }*/
 }

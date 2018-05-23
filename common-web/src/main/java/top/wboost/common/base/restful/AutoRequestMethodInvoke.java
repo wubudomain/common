@@ -34,6 +34,10 @@ public class AutoRequestMethodInvoke {
         this.autoMehotdMap.put(path, method);
     }
 
+    public Map<String, AutoRequestMethod> getAutoRequestMethod() {
+        return this.autoMehotdMap;
+    }
+
     private AutoRequestMethod getRequestMethod(HttpServletRequest request) {
         String url = request.getRequestURI().substring(request.getContextPath().length(),
                 request.getRequestURI().length());

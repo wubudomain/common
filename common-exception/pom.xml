@@ -3,7 +3,7 @@
   <parent>
     <groupId>top.wboost</groupId>
     <artifactId>common</artifactId>
-    <version>3.1.1RELEASE</version>
+    <version>3.1.2-SNAPSHOT</version>
   </parent>
   <artifactId>common-exception</artifactId>
   <dependencies>

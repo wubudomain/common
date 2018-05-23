@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,7 +36,7 @@ public class AutoMappingFindController implements InitializingBean {
 
     private MultiValueMap<String, RequestMappingInfo> urlLookup;
 
-    private ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
+    private static ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
 
     @GetMapping
     @Explain(value = "查询所有接口")
@@ -52,14 +51,15 @@ public class AutoMappingFindController implements InitializingBean {
     }
 
     @Data
-    class ReturnInfo {
+    public static class ReturnInfo {
         RequestMappingInfo requestMappingInfo;
         Map<String, Object> requestMappingInfoSimple = new HashMap<>();
         HandlerMethod handlerMethod;
         /**parameterName:java.lang.String**/
-        Map<String, String> parameterTypes = new LinkedHashMap<>();
+        List<ParameterInfo> parameterTypes = new ArrayList<>();
         String returnType;
         String methodName;
+        String version;
 
         public ReturnInfo(RequestMappingInfo requestMappingInfo, HandlerMethod handlerMethod) {
             super();
@@ -85,15 +85,46 @@ public class AutoMappingFindController implements InitializingBean {
             this.handlerMethod = handlerMethod;
             this.methodName = handlerMethod.getMethod().getName();
             this.returnType = handlerMethod.getReturnType().getParameterType().getName();
+            this.version = "1.0";
             List<MethodParameter> methodParameterList = Arrays.asList(handlerMethod.getMethodParameters());
             String[] names = parameterNameDiscoverer.getParameterNames(handlerMethod.getMethod());
             for (int i = 0; i < methodParameterList.size(); i++) {
+                ParameterInfo info = new ParameterInfo();
                 MethodParameter methodParameter = methodParameterList.get(i);
                 String name = names[i];
                 String type = methodParameter.getParameterType().getName();
-                parameterTypes.put(name, type);
+                info.setIndex(i);
+                info.setName(name);
+                info.setRemark(null);
+                info.setRequire(false);
+                info.setJavaType(type);
+                info.setRemark("备注");
+                parameterTypes.add(info);
             }
         }
+
+        public ReturnInfo() {
+            super();
+        }
+    }
+
+    /*@Data
+    public static class RequestMappingInfoSimple {
+        private ConsumesRequestCondition  consumesRequestCondition ;
+        private HeadersRequestCondition  headersRequestCondition ;
+        private RequestMethodsRequestCondition  methodsCondition ;
+        private ParamsRequestCondition paramsCondition;
+        private PatternsRequestCondition  patternsCondition;
+        private ProducesRequestCondition producesCondition;
+    }*/
+
+    @Data
+    public static class ParameterInfo {
+        private String name;
+        private Integer index;
+        private String javaType;
+        private String remark;
+        private boolean require;
     }
 
     @GetMapping("/url")

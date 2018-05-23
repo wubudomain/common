@@ -3,6 +3,9 @@ package top.wboost.common.base.restful;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+
 import lombok.Data;
 import top.wboost.common.base.service.BaseService;
 
@@ -19,5 +22,7 @@ public class AutoRequestMethod {
     private Method method;
     private String path;
     private EnableBaseRestful enableBaseRestful;
+    private RequestMappingInfo requestMappingInfo;
+    private RequestMapping requestMapping;
 
 }
