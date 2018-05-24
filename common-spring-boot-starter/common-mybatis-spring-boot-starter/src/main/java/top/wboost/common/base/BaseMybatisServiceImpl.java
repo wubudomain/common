@@ -131,15 +131,17 @@ public class BaseMybatisServiceImpl<T, Mapper extends tk.mybatis.mapper.common.M
         Set<String> likeFieldsCol = null;
         if (likeFields.length > 0) {
             likeFieldsCol = new HashSet<>(Arrays.asList(likeFields));
-            for (Field field : Arrays.asList(fields)) {
-                String name = field.getName();
-                Object val = ReflectUtil.getReadMethod(clazz, name).invoke(t);
-                if (val != null) {
-                    if (likeFieldsCol.contains(name)) {
-                        criteria.andLike(name, "%" + val.toString() + "%");
-                    } else {
-                        criteria.andEqualTo(name, val.toString());
-                    }
+        } else {
+            likeFieldsCol = new HashSet<>();
+        }
+        for (Field field : Arrays.asList(fields)) {
+            String name = field.getName();
+            Object val = ReflectUtil.getReadMethod(clazz, name).invoke(t);
+            if (val != null) {
+                if (likeFieldsCol.contains(name)) {
+                    criteria.andLike(name, "%" + val.toString() + "%");
+                } else {
+                    criteria.andEqualTo(name, val.toString());
                 }
             }
         }

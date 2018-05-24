@@ -1,5 +1,9 @@
 package top.wboost.common.base.restful;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * 自动生成方法类型
  * @className AutoRequestMehthodType
@@ -19,5 +23,14 @@ public enum AutoRequestMehthodType {
     UPDATE_BY_ID,
     /**POST:    /{inspectName}        保存数据**/
     SAVE;
+
+    public static Set<String> getAllNames() {
+        Set<String> set = new HashSet<>();
+        Arrays.asList(AutoRequestMehthodType.values()).forEach(type -> {
+            set.add(type.toString());
+        });
+        return set;
+
+    }
 
 }
