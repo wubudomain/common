@@ -8,28 +8,42 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ParameterNameDiscoverer;
+import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
+import com.alibaba.fastjson.JSONObject;
+
+import io.swagger.annotations.ApiParam;
 import lombok.Data;
+import springfox.documentation.spring.web.PropertySourcedRequestMappingHandlerMapping;
+import springfox.documentation.spring.web.json.Json;
 import top.wboost.common.annotation.Explain;
 import top.wboost.common.base.entity.ResultEntity;
+import top.wboost.common.spring.boot.webmvc.annotation.ApiVersion;
 import top.wboost.common.system.code.SystemCode;
 import top.wboost.common.util.ReflectUtil;
+import top.wboost.common.utils.web.interfaces.context.EzWebApplicationListener;
+import top.wboost.common.utils.web.utils.SpringBeanUtil;
 
 @RestController
 @RequestMapping("/webmvc/mapping")
-public class AutoMappingFindController implements InitializingBean {
+public class AutoMappingFindController implements InitializingBean, EzWebApplicationListener {
 
     @Autowired
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
@@ -37,6 +51,9 @@ public class AutoMappingFindController implements InitializingBean {
     private MultiValueMap<String, RequestMappingInfo> urlLookup;
 
     private static ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
+
+    HandlerMethod method = null;
+    Object handler = null;
 
     @GetMapping
     @Explain(value = "查询所有接口")
@@ -48,6 +65,28 @@ public class AutoMappingFindController implements InitializingBean {
         });
         return ResultEntity.success(SystemCode.QUERY_OK).setData(result)
                 .setFilterNames("handlerMethod", "requestMappingInfo").build();
+    }
+
+    @SuppressWarnings("unchecked")
+    @GetMapping("docs")
+    @Explain(value = "查询所有接口")
+    public ResultEntity getAllMappingBySwagger(@RequestParam(value = "group", required = false) String swaggerGroup,
+            HttpServletRequest servletRequest) {
+        //Swagger swagger = null;
+        ResponseEntity<Json> response = null;
+        try {
+            response = (ResponseEntity<Json>) method.getMethod().invoke(handler, swaggerGroup, servletRequest);
+            /*String body = response.getBody().toString();
+            swagger = JSONObject.parseObject(response.getBody().toString(), Swagger.class);*/
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        JSONObject json = JSONObject.parseObject(response.getBody().value());
+        json.getJSONObject("paths").forEach((path, jo) -> {
+            List<HandlerMethod> list = requestMappingHandlerMapping.getHandlerMethodsForMappingName(path);
+            System.out.println(list);
+        });
+        return ResultEntity.success(SystemCode.QUERY_OK).setData(response.getBody()).build();
     }
 
     @Data
@@ -85,7 +124,12 @@ public class AutoMappingFindController implements InitializingBean {
             this.handlerMethod = handlerMethod;
             this.methodName = handlerMethod.getMethod().getName();
             this.returnType = handlerMethod.getReturnType().getParameterType().getName();
-            this.version = "1.0";
+            ApiVersion apiVersion = AnnotationUtils.findAnnotation(handlerMethod.getMethod(), ApiVersion.class);
+            if (apiVersion == null) {
+                this.version = "1.0.0";
+            } else {
+                this.version = apiVersion.value();
+            }
             List<MethodParameter> methodParameterList = Arrays.asList(handlerMethod.getMethodParameters());
             String[] names = parameterNameDiscoverer.getParameterNames(handlerMethod.getMethod());
             for (int i = 0; i < methodParameterList.size(); i++) {
@@ -96,9 +140,15 @@ public class AutoMappingFindController implements InitializingBean {
                 info.setIndex(i);
                 info.setName(name);
                 info.setRemark(null);
-                info.setRequire(false);
+                ApiParam apiParam = methodParameter.getParameterAnnotation(ApiParam.class);
+                if (apiParam == null) {
+                    info.setRequire(false);
+                    info.setRemark("无");
+                } else {
+                    info.setRequire(apiParam.required());
+                    info.setRemark(apiParam.value());
+                }
                 info.setJavaType(type);
-                info.setRemark("备注");
                 parameterTypes.add(info);
             }
         }
@@ -157,7 +207,7 @@ public class AutoMappingFindController implements InitializingBean {
         Field field = ReflectUtil.findField(requestMappingHandlerMapping.getClass(), "mappingRegistry");
         if (field != null) {
             field.setAccessible(true);
-            Object mappingRegistry = field.get(requestMappingHandlerMapping);
+            mappingRegistry = field.get(requestMappingHandlerMapping);
             if (mappingRegistry != null) {
                 Field urlLookupField = ReflectUtil.findField(mappingRegistry.getClass(), "urlLookup");
                 urlLookupField.setAccessible(true);
@@ -168,6 +218,29 @@ public class AutoMappingFindController implements InitializingBean {
                     this.urlLookup = urlLookup;
                 }
             }
+        }
+    }
+
+    Object mappingRegistry = null;
+
+    @Override
+    public void onWebApplicationEvent(ContextRefreshedEvent event) {
+        try {
+            PropertySourcedRequestMappingHandlerMapping p = SpringBeanUtil
+                    .getBean(PropertySourcedRequestMappingHandlerMapping.class);
+            Field handlerMethodsField = ReflectUtil.findField(PropertySourcedRequestMappingHandlerMapping.class,
+                    "handlerMethods");
+            handlerMethodsField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<String, HandlerMethod> handlerMethods = (Map<String, HandlerMethod>) handlerMethodsField.get(p);
+            this.method = handlerMethods.get("/v2/api-docs");
+            Field handlerField = ReflectUtil.findField(PropertySourcedRequestMappingHandlerMapping.class, "handler");
+            handlerField.setAccessible(true);
+            this.handler = handlerField.get(p);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
         }
     }
 
