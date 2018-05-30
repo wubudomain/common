@@ -1,13 +1,13 @@
 package top.wboost.common.utils.web.utils;
 
 import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -15,9 +15,11 @@ import java.util.Map.Entry;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
-import org.springframework.http.MediaType;
+import org.apache.commons.io.IOUtils;
+import org.springframework.web.multipart.MultipartFile;
 
-import com.alibaba.fastjson.JSONObject;
+import top.wboost.common.base.enums.CharsetEnum;
+import top.wboost.common.util.SystemUtil;
 
 /**
  * 网络资源工具
@@ -34,6 +36,75 @@ public class WebResourceUtil {
 
     private static SSLSocketFactory sslSocketFactory;
 
+    /**
+     * 上传文件
+     * @author jwSun
+     * @date 2017年5月2日 下午2:00:49
+     * @param urlString
+     * @param file
+     * @param charset
+     * @return
+     */
+    public static String getURLResponse(String urlString, MultipartFile file, String charset) {
+        //List<String> list = new ArrayList<String>();
+        HttpURLConnection connection = null;
+        OutputStream outputStream = null;
+        try {
+            String BOUNDARY = "---------666666"; // 定义数据分隔线  
+            connection = getConnection(urlString);
+            connection.setRequestProperty("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)");
+            connection.setRequestProperty("Charsert", "UTF-8");
+            connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + BOUNDARY);
+
+            outputStream = new DataOutputStream(connection.getOutputStream());
+            byte[] end_data = ("\r\n--" + BOUNDARY + "--\r\n").getBytes();// 定义最后数据分隔线  
+            //int leng = list.size();
+            //for (int i = 0; i < leng; i++) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("--");
+            sb.append(BOUNDARY);
+            sb.append("\r\n");
+            sb.append("Content-Disposition: form-data;name=\"file" + "\";filename=\"" + file.getOriginalFilename()
+                    + "\"\r\n");
+            sb.append("Content-Type:application/octet-stream\r\n\r\n");
+
+            byte[] data = sb.toString().getBytes();
+            outputStream.write(data);
+            DataInputStream in = new DataInputStream(file.getInputStream());
+            int bytes = 0;
+            byte[] bufferOut = new byte[1024];
+            while ((bytes = in.read(bufferOut)) != -1) {
+                outputStream.write(bufferOut, 0, bytes);
+            }
+            outputStream.write("\r\n".getBytes()); //多个文件时，二个文件之间加入这个  
+            in.close();
+            //}
+            outputStream.write(end_data);
+            outputStream.flush();
+            outputStream.close();
+            return readStream(connection.getInputStream(), charset);
+        } catch (Exception e) {
+
+        } finally {
+            IOUtils.closeQuietly(outputStream);
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+        return null;
+    }
+
+    /*static {
+        try {
+            TrustManager[] tm = { new MyX509TrustManager() };
+            SSLContext sslContextInstance = SSLContext.getInstance("SSL", "SunJSSE");
+            sslContextInstance.init(null, tm, new java.security.SecureRandom());
+            sslSocketFactory = sslContextInstance.getSocketFactory();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }*/
+
     public static SSLSocketFactory getSSLSocketFactory() {
         return sslSocketFactory;
     }
@@ -45,7 +116,7 @@ public class WebResourceUtil {
      * @param urlString url地址
      */
     public static String getURLResponse(String urlString) {
-        return getURLResponse(urlString, null, RequestMethod.GET, "utf-8", null);
+        return getURLResponse(urlString, null, RequestMethod.GET, CharsetEnum.UTF_8.getName(), null);
     }
 
     /**
@@ -59,7 +130,7 @@ public class WebResourceUtil {
      * @return
      */
     public static String getURLResponse(String urlString, Map<String, String> params) {
-        return getURLResponse(urlString, params, RequestMethod.GET, "utf-8", null);
+        return getURLResponse(urlString, params, RequestMethod.GET, CharsetEnum.UTF_8.getName(), null);
     }
 
     /**
@@ -73,7 +144,7 @@ public class WebResourceUtil {
      * @return
      */
     public static String getURLResponse(String urlString, Map<String, String> params, RequestMethod method) {
-        return getURLResponse(urlString, params, method, "utf-8", null);
+        return getURLResponse(urlString, params, method, CharsetEnum.UTF_8.getName(), null);
     }
 
     /**
@@ -107,15 +178,6 @@ public class WebResourceUtil {
         return getURLResponse(urlString, null, method, charset, null);
     }
 
-    public static String getURLResponse(String urlString, Map<String, String> params, RequestMethod method,
-            String charset, Map<String, String> headers) {
-        return getURLResponse(urlString, params, method, charset, headers, "form");
-    }
-
-    public static String getURLResponseJson(String urlString, Map<String, Object> params, RequestMethod method) {
-        return getURLResponse(urlString, params, method, "utf-8", null, "json");
-    }
-
     /**
      * 获取指定URL页面或资源
      * @param urlString
@@ -128,17 +190,17 @@ public class WebResourceUtil {
      *            Map<String,String> 传递参数
      * @author sjw
      */
-    public static String getURLResponse(String urlString, Map<String, ?> params, RequestMethod method, String charset,
-            Map<String, String> headers, String paramType) {
+    public static String getURLResponse(String urlString, Map<String, String> params, RequestMethod method,
+            String charset, Map<String, String> headers) {
 
         HttpURLConnection connection = null;
         InputStream inputStream = null;
         BufferedInputStream bufferedInputStream = null;
         try {
             if (charset == null)
-                charset = "utf-8";
+                charset = SystemUtil.FILE_ENCODING;
 
-            String paramStr = getParams(params, paramType);
+            String paramStr = getParams(params);
 
             if ("GET".equalsIgnoreCase(method.toString())) {
                 if (!"".equals(paramStr)) {
@@ -150,7 +212,7 @@ public class WebResourceUtil {
             setHeader(connection, headers);
 
             if (RequestMethod.POST.toString().equalsIgnoreCase(method.toString())) {
-                beforePost(connection, paramStr, paramType);
+                beforePost(connection, paramStr);
             } else if (RequestMethod.GET.toString().equalsIgnoreCase(method.toString())) {
                 beforeGet(connection, paramStr);
             } else {
@@ -162,8 +224,8 @@ public class WebResourceUtil {
             e.printStackTrace();
             return "";
         } finally {
-            closeQuietly(bufferedInputStream);
-            closeQuietly(inputStream);
+            IOUtils.closeQuietly(bufferedInputStream);
+            IOUtils.closeQuietly(inputStream);
             if (connection != null) {
                 connection.disconnect();
             }
@@ -174,15 +236,11 @@ public class WebResourceUtil {
         connection.setRequestMethod(RequestMethod.GET.toString());
     }
 
-    private static void beforePost(HttpURLConnection connection, String paramStr, String paramType) {
+    private static void beforePost(HttpURLConnection connection, String paramStr) {
         DataOutputStream dataOutputStream = null;
         try {
             connection.setRequestMethod(RequestMethod.POST.toString());
-            if (paramType.equals("json")) {
-                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            } else {
-                connection.setRequestProperty("Content-Type", MediaType.APPLICATION_JSON_UTF8_VALUE);
-            }
+            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
             if (paramStr != null) {
                 dataOutputStream = new DataOutputStream(connection.getOutputStream());
                 dataOutputStream.writeBytes(paramStr);
@@ -192,29 +250,9 @@ public class WebResourceUtil {
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
-            closeQuietly(dataOutputStream);
+            IOUtils.closeQuietly(dataOutputStream);
         }
 
-    }
-
-    private static void closeQuietly(OutputStream output) {
-        if (output != null) {
-            try {
-                output.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private static void closeQuietly(InputStream input) {
-        if (input != null) {
-            try {
-                input.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private static void setHeader(HttpURLConnection connection, Map<String, String> headers) {
@@ -228,22 +266,18 @@ public class WebResourceUtil {
         }
     }
 
-    private static String getParams(Map<String, ?> params, String paramsType) throws Exception {
-        if (paramsType.equals("json")) {
-            return JSONObject.toJSONString(params);
-        }
+    private static String getParams(Map<String, String> params) throws Exception {
         StringBuffer stringBuffer = new StringBuffer();
         if (null != params) {
-            Iterator<?> mapIterator = params.entrySet().iterator();
+            Iterator<Entry<String, String>> mapIterator = params.entrySet().iterator();
             while (mapIterator.hasNext()) {
-                @SuppressWarnings("unchecked")
-                Entry<String, ?> mapEntry = (Entry<String, ?>) mapIterator.next();
+                Entry<String, String> mapEntry = mapIterator.next();
                 if ("".equals(stringBuffer.toString())) {
-                    stringBuffer.append(
-                            mapEntry.getKey() + "=" + URLEncoder.encode(mapEntry.getValue().toString(), "utf-8"));
+                    stringBuffer.append(mapEntry.getKey() + "="
+                            + URLEncoder.encode(mapEntry.getValue(), CharsetEnum.UTF_8.getName()));
                 } else {
-                    stringBuffer.append(
-                            "&" + mapEntry.getKey() + "=" + URLEncoder.encode(mapEntry.getValue().toString(), "utf-8"));
+                    stringBuffer.append("&" + mapEntry.getKey() + "="
+                            + URLEncoder.encode(mapEntry.getValue(), CharsetEnum.UTF_8.getName()));
                 }
             }
         }
@@ -309,11 +343,5 @@ public class WebResourceUtil {
 
         }
         return connection;
-    }
-
-    public static void main(String[] args) {
-        Map<String, Object> map = new HashMap<>();
-        String resp = getURLResponseJson("www.baidu.com", map, RequestMethod.POST);
-        System.out.println(resp);
     }
 }

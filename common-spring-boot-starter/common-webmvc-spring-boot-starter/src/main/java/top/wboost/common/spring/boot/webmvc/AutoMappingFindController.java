@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.method.HandlerMethod;
@@ -35,7 +36,8 @@ import springfox.documentation.spring.web.PropertySourcedRequestMappingHandlerMa
 import springfox.documentation.spring.web.json.Json;
 import top.wboost.common.annotation.Explain;
 import top.wboost.common.base.entity.ResultEntity;
-import top.wboost.common.spring.boot.webmvc.annotation.ApiVersion;
+import top.wboost.common.spring.boot.swagger.annotation.ApiVersion;
+import top.wboost.common.spring.boot.swagger.annotation.GlobalForApiConfig;
 import top.wboost.common.system.code.SystemCode;
 import top.wboost.common.util.ReflectUtil;
 import top.wboost.common.utils.web.interfaces.context.EzWebApplicationListener;
@@ -49,6 +51,7 @@ public class AutoMappingFindController implements InitializingBean, EzWebApplica
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
 
     private MultiValueMap<String, RequestMappingInfo> urlLookup;
+    private Map<RequestMappingInfo, HandlerMethod> mappingLookup;
 
     private static ParameterNameDiscoverer parameterNameDiscoverer = new LocalVariableTableParameterNameDiscoverer();
 
@@ -72,21 +75,41 @@ public class AutoMappingFindController implements InitializingBean, EzWebApplica
     @Explain(value = "查询所有接口")
     public ResultEntity getAllMappingBySwagger(@RequestParam(value = "group", required = false) String swaggerGroup,
             HttpServletRequest servletRequest) {
-        //Swagger swagger = null;
         ResponseEntity<Json> response = null;
+        JSONObject json = null;
         try {
             response = (ResponseEntity<Json>) method.getMethod().invoke(handler, swaggerGroup, servletRequest);
-            /*String body = response.getBody().toString();
-            swagger = JSONObject.parseObject(response.getBody().toString(), Swagger.class);*/
+            json = JSONObject.parseObject(response.getBody().value());
+            json.getJSONObject("paths").forEach((path, jo) -> {
+                JSONObject paths = (JSONObject) jo;
+                List<RequestMappingInfo> infos = urlLookup.get(path);
+                if (infos.size() > 0) {
+                    paths.forEach((method, values) -> {
+                        JSONObject valuesObj = (JSONObject) values;
+                        RequestMethod m = RequestMethod.valueOf(method.toUpperCase());
+                        for (RequestMappingInfo info : infos) {
+                            if (info.getMethodsCondition().getMethods().contains(m)) {
+                                HandlerMethod handlerMethod = mappingLookup.get(info);
+                                if (handlerMethod != null) {
+                                    ApiVersion version = handlerMethod.getMethodAnnotation(ApiVersion.class);
+                                    String versionStr;
+                                    if (version == null) {
+                                        versionStr = GlobalForApiConfig.DEFAULT_VERSION;
+                                    } else {
+                                        versionStr = version.value();
+                                    }
+                                    valuesObj.put("version", versionStr);
+                                }
+                                break;
+                            }
+                        }
+                    });
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
-        JSONObject json = JSONObject.parseObject(response.getBody().value());
-        json.getJSONObject("paths").forEach((path, jo) -> {
-            List<HandlerMethod> list = requestMappingHandlerMapping.getHandlerMethodsForMappingName(path);
-            System.out.println(list);
-        });
-        return ResultEntity.success(SystemCode.QUERY_OK).setData(response.getBody()).build();
+        return ResultEntity.success(SystemCode.QUERY_OK).setData(json).build();
     }
 
     @Data
@@ -202,6 +225,7 @@ public class AutoMappingFindController implements InitializingBean, EzWebApplica
                 .setFilterNames("handlerMethod", "requestMappingInfo").build();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void afterPropertiesSet() throws Exception {
         Field field = ReflectUtil.findField(requestMappingHandlerMapping.getClass(), "mappingRegistry");
@@ -210,13 +234,15 @@ public class AutoMappingFindController implements InitializingBean, EzWebApplica
             mappingRegistry = field.get(requestMappingHandlerMapping);
             if (mappingRegistry != null) {
                 Field urlLookupField = ReflectUtil.findField(mappingRegistry.getClass(), "urlLookup");
-                urlLookupField.setAccessible(true);
                 if (urlLookupField != null) {
-                    @SuppressWarnings("unchecked")
+                    urlLookupField.setAccessible(true);
                     MultiValueMap<String, RequestMappingInfo> urlLookup = (MultiValueMap<String, RequestMappingInfo>) urlLookupField
                             .get(mappingRegistry);
                     this.urlLookup = urlLookup;
                 }
+                Field mappingLookupField = ReflectUtil.findField(mappingRegistry.getClass(), "mappingLookup");
+                mappingLookupField.setAccessible(true);
+                this.mappingLookup = (Map<RequestMappingInfo, HandlerMethod>) mappingLookupField.get(mappingRegistry);
             }
         }
     }
