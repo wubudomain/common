@@ -1,5 +1,6 @@
 package top.wboost.common.util;
 
+import top.wboost.common.base.entity.HttpRequestBuilder;
 import top.wboost.common.base.entity.ResultEntity;
 import top.wboost.common.system.code.resolver.CodeResolver;
 import top.wboost.common.system.code.resolver.impl.SimpleMultipartCodeResolver;
@@ -23,5 +24,9 @@ public class ResponseUtil {
 
     public static Object codePrompt(ResultEntity resolveEntity) {
         return resolveEntity.getInfo().getSystemCode().getCodeResolver().resolve(resolveEntity);
+    }
+
+    public static void main(String[] args) {
+        System.out.println(HttpClientUtil.execute(HttpRequestBuilder.get("https://www.pornhub.com/")));
     }
 }

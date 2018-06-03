@@ -45,7 +45,6 @@
 		<module>common-kylin-support-repository</module>
 		<module>common-boost</module>
 		<module>common-boot</module>
-    	<module>common-spring-boot-starter</module>
   </modules>
 
 	<properties>
