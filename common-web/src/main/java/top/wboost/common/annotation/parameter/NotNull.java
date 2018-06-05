@@ -21,6 +21,4 @@ public @interface NotNull {
 
     String value() default "";
 
-    Class<? extends ParameterConfigChecker> checker = NotNullChecker.class;
-
 }

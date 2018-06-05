@@ -21,6 +21,4 @@ public @interface NotEmpty {
 
     String value() default "";
 
-    Class<? extends ParameterConfigChecker> checker = NotEmptyChecker.class;
-
 }
