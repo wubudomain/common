@@ -2,7 +2,7 @@ package top.wboost.common.sql.fragment;
 
 import org.hibernate.internal.util.collections.ArrayHelper;
 
-import top.wboost.common.sql.dialect.SqlWarp;
+import top.wboost.common.sql.manager.SqlManager;
 
 public class ConditionFragment implements Fragment {
     private String tableAlias;
@@ -10,16 +10,8 @@ public class ConditionFragment implements Fragment {
     private String[] rhs;
     private String op = "=";
 
-    private SqlWarp sqlWarp;
-
-    public ConditionFragment(SqlWarp sqlWarp) {
-        super();
-        this.sqlWarp = sqlWarp;
-    }
-
     public ConditionFragment() {
         super();
-        this.sqlWarp = SqlWarp.defaultSqlWarp;
     }
 
     /**
@@ -46,7 +38,7 @@ public class ConditionFragment implements Fragment {
             strArray[i] = lhs[i].toString();
         }
         this.lhs = strArray;
-        this.rhs = new String[] { sqlWarp.warp(rhs) };
+        this.rhs = new String[] { SqlManager.encode(SqlManager.getSqlWarp().warp(rhs)) };
         return this;
     }
 
@@ -56,7 +48,7 @@ public class ConditionFragment implements Fragment {
             strArray[i] = lhs[i].toString();
         }
         this.lhs = strArray;
-        this.rhs = sqlWarp.warp(rhs);
+        this.rhs = SqlManager.encode(SqlManager.getSqlWarp().warp(rhs));
         return this;
     }
 

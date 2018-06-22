@@ -1,24 +1,17 @@
 package top.wboost.common.sql.fragment;
 
-import top.wboost.common.sql.dialect.SqlWarp;
 import top.wboost.common.sql.enums.SqlFunction;
+import top.wboost.common.sql.manager.SqlManager;
 
 public class SqlFunctionConditionFragment implements Fragment {
     private String tableAlias;
     private String op = "=";
     private SqlFunction sqlFunction;
     private String column;
-    private SqlWarp sqlWarp;
     private Object value;
-
-    public SqlFunctionConditionFragment(SqlWarp sqlWarp) {
-        super();
-        this.sqlWarp = sqlWarp;
-    }
 
     public SqlFunctionConditionFragment() {
         super();
-        this.sqlWarp = SqlWarp.defaultSqlWarp;
     }
 
     /**
@@ -50,7 +43,7 @@ public class SqlFunctionConditionFragment implements Fragment {
             }
         }
         if (valuewarp == null) {
-            valuewarp = sqlWarp.warp(value);
+            valuewarp = SqlManager.encode(SqlManager.getSqlWarp().warp(value));
         }
         return sqlFunction.getSqlFunctionFragment().toFragmentString(null, tableAlias + "." + column) + " " + this.op
                 + " " + valuewarp;

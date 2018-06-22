@@ -1,9 +1,8 @@
 package top.wboost.common.sql.builder;
 
-import top.wboost.common.sql.dialect.KylinSqlWarp;
-import top.wboost.common.sql.dialect.SqlWarp;
 import top.wboost.common.sql.fragment.ConditionFragment;
 import top.wboost.common.sql.fragment.InFragment;
+import top.wboost.common.sql.manager.SqlManager;
 
 /**
  * where 条件创建
@@ -14,10 +13,8 @@ import top.wboost.common.sql.fragment.InFragment;
  */
 public class SqlCondition {
 
-    public static SqlWarp sqlWarp = new KylinSqlWarp();
-
     public static InFragment in() {
-        return new InFragment(sqlWarp);
+        return new InFragment();
     }
 
     public static InFragment in(String tableAlias, String column, Object... values) {
@@ -59,7 +56,8 @@ public class SqlCondition {
 
     public static ConditionFragment between(String tableAlias, String column, Object lValue, Object rValue) {
         return between().setTableAlias(tableAlias).setCondition(new String[] { column },
-                new String[] { sqlWarp.warp(lValue) + " and " + sqlWarp.warp(rValue) });
+                new String[] { SqlManager.encode(SqlManager.getSqlWarp().warp(lValue)) + " and "
+                        + SqlManager.encode(SqlManager.getSqlWarp().warp(rValue)) });
     }
 
     public static ConditionFragment like() {

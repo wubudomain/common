@@ -1,4 +1,4 @@
-package top.wboost.common.sql.dialect;
+package top.wboost.common.sql.warp;
 
 import java.util.Collection;
 import java.util.Date;
@@ -112,6 +112,15 @@ public abstract class AbstractSqlWarp implements SqlWarp {
         Collection<?> collectionObj = (Collection<?>) val;
         Object[] objArray = collectionObj.toArray(new Object[collectionObj.size()]);
         return warpArray(objArray);
+    }
+
+    public String[] warp(Object[] val) {
+        String[] retArray = new String[val.length];
+        for (int i = 0; i < val.length; i++) {
+            Object valOne = val[i];
+            retArray[i] = warp(valOne);
+        }
+        return retArray;
     }
 
 }

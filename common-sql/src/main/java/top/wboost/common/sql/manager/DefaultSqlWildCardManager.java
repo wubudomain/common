@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import top.wboost.common.base.annotation.AutoRootApplicationConfig;
 import top.wboost.common.manager.DefaultWildCardManager;
-import top.wboost.common.sql.dialect.SqlWarp;
+import top.wboost.common.sql.warp.SqlWarp;
 import top.wboost.common.system.exception.SystemException;
 import top.wboost.common.util.Checker;
 import top.wboost.common.util.StringUtil;
@@ -31,7 +31,7 @@ public class DefaultSqlWildCardManager extends DefaultWildCardManager {
         super(warp);
     }
 
-    private static final String SQL_WILDCARD = "\\$\\{-\\{(.*?)\\}-\\}";
+    private static final String SQL_WILDCARD = "\\$\\{-\\{(.*?)\\}-\\}\\$";
     private static final String SQL_PARAM_WILDCARD = "\\{([^\\{]+?)\\}";
 
     //匹配标准sql字段

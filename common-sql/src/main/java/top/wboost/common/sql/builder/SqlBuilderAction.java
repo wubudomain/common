@@ -4,14 +4,14 @@ import org.hibernate.dialect.Dialect;
 
 import top.wboost.common.base.page.BasePage;
 import top.wboost.common.sql.dialect.KylinDialect;
-import top.wboost.common.sql.dialect.KylinSqlWarp;
-import top.wboost.common.sql.dialect.SqlWarp;
+import top.wboost.common.sql.dialect.RealSqlDialect;
 import top.wboost.common.sql.enums.SqlFunction;
 import top.wboost.common.sql.fragment.Fragment;
 import top.wboost.common.sql.fragment.JoinType;
 import top.wboost.common.sql.fragment.OrFragment;
 import top.wboost.common.sql.fragment.QueryJoinFragment;
 import top.wboost.common.sql.fragment.QuerySelect;
+import top.wboost.common.sql.warp.DefaultSqlWarp;
 
 /**
  * sql创建器
@@ -22,8 +22,8 @@ import top.wboost.common.sql.fragment.QuerySelect;
  */
 public class SqlBuilderAction {
 
-    public static QuerySelect createQuery(Dialect dialect, SqlWarp sqlWarp) {
-        QuerySelect querySelect = new QuerySelect(dialect, sqlWarp);
+    public static QuerySelect createQuery(RealSqlDialect dialect) {
+        QuerySelect querySelect = new QuerySelect(dialect,new DefaultSqlWarp());
         return querySelect;
     }
 
@@ -106,7 +106,7 @@ public class SqlBuilderAction {
     public static void main(String[] args) {
         System.out.println(SqlHavingCondition.in("TIME_DIM", "XS", SqlFunction.COUNT, 1000, 2000).toFragmentString());
 
-        QuerySelect querySelect = createQuery(new KylinDialect(), new KylinSqlWarp());
+        QuerySelect querySelect = createQuery(new KylinDialect());
         querySelect.addSelectColumn("DEV_ID_DIM", "KK_LOCATION_NAME");
         addSelectColumn(querySelect, "DATE_DIM", "YF");
         addSelectColumn(querySelect, "TIME_DIM", "XS");

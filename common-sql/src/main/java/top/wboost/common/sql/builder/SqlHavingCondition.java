@@ -1,11 +1,10 @@
 package top.wboost.common.sql.builder;
 
-import top.wboost.common.sql.dialect.KylinSqlWarp;
-import top.wboost.common.sql.dialect.SqlWarp;
 import top.wboost.common.sql.enums.SqlFunction;
 import top.wboost.common.sql.fragment.ConditionFragment;
 import top.wboost.common.sql.fragment.InFragment;
 import top.wboost.common.sql.fragment.SqlFunctionConditionFragment;
+import top.wboost.common.sql.manager.SqlManager;
 
 /**
  * having条件创建
@@ -16,10 +15,8 @@ import top.wboost.common.sql.fragment.SqlFunctionConditionFragment;
  */
 public class SqlHavingCondition {
 
-    public static SqlWarp sqlWarp = new KylinSqlWarp();
-
     public static InFragment in() {
-        return new InFragment(sqlWarp);
+        return new InFragment();
     }
 
     public static InFragment in(String tableAlias, String column, SqlFunction sqlFunction, Object... values) {
@@ -60,7 +57,8 @@ public class SqlHavingCondition {
     public static SqlFunctionConditionFragment between(String tableAlias, String column, SqlFunction sqlFunction,
             Object lValue, Object rValue) {
         return between().setTableAlias(tableAlias).setSqlFunction(column, sqlFunction,
-                sqlWarp.warp(lValue) + " and " + sqlWarp.warp(rValue) + ":nowarp");
+                SqlManager.encode(SqlManager.getSqlWarp().warp(lValue)) + " and "
+                        + SqlManager.encode(SqlManager.getSqlWarp().warp(rValue)) + ":nowarp");
     }
 
     public static SqlFunctionConditionFragment like() {

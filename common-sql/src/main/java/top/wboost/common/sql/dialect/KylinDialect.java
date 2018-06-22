@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import org.hibernate.JDBCException;
 import org.hibernate.NullPrecedence;
 import org.hibernate.boot.TempTableDdlTransactionHandling;
-import org.hibernate.dialect.Dialect;
 import org.hibernate.dialect.pagination.AbstractLimitHandler;
 import org.hibernate.dialect.pagination.LimitHandler;
 import org.hibernate.dialect.pagination.LimitHelper;
@@ -21,7 +20,7 @@ import org.hibernate.hql.spi.id.local.AfterUseAction;
 import org.hibernate.hql.spi.id.local.LocalTemporaryTableBulkIdStrategy;
 import org.hibernate.internal.util.JdbcExceptionHelper;
 
-public class KylinDialect extends Dialect {
+public class KylinDialect extends RealSqlDialect {
 
     private static final LimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
         @Override
@@ -336,5 +335,10 @@ public class KylinDialect extends Dialect {
     @Override
     public String getNotExpression(String expression) {
         return "not (" + expression + ")";
+    }
+
+    @Override
+    public String processLimitSql(String sql, RowSelection selection) {
+        return LIMIT_HANDLER.processSql(sql, selection);
     }
 }

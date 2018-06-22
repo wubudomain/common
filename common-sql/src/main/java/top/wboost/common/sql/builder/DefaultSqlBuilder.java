@@ -1,17 +1,16 @@
 package top.wboost.common.sql.builder;
 
-import org.hibernate.dialect.Dialect;
-
 import top.wboost.common.base.page.BasePage;
 import top.wboost.common.sql.dialect.HiveDialect;
-import top.wboost.common.sql.dialect.KylinSqlWarp;
-import top.wboost.common.sql.dialect.SqlWarp;
+import top.wboost.common.sql.dialect.RealSqlDialect;
 import top.wboost.common.sql.enums.SqlFunction;
 import top.wboost.common.sql.exception.SqlBuilderException;
 import top.wboost.common.sql.fragment.Fragment;
 import top.wboost.common.sql.fragment.JoinType;
 import top.wboost.common.sql.fragment.QueryJoinFragment;
 import top.wboost.common.sql.fragment.QuerySelect;
+import top.wboost.common.sql.warp.DefaultSqlWarp;
+import top.wboost.common.sql.warp.SqlWarp;
 
 /**
  * 默认 sql 创建
@@ -28,7 +27,7 @@ public class DefaultSqlBuilder {
      */
     public static void main(String[] args) {
         DefaultSqlBodyBuilder sqlBuilder = DefaultSqlBuilder.createBuilder("KAKOU_FACT", "KAKOU_FACT",
-                new HiveDialect(), new KylinSqlWarp());
+                new HiveDialect(), new DefaultSqlWarp());
         sqlBuilder.addSelectColumn("DEV_ID_DIM", "KK_LOCATION_NAME");
         sqlBuilder.addSelectColumn("DATE_DIM", "YF");
         sqlBuilder.addSelectColumn("TIME_DIM", "XS");
@@ -54,7 +53,7 @@ public class DefaultSqlBuilder {
      * @param factTableAlias 事实表别名
      * @return
      */
-    public static DefaultSqlBodyBuilder createBuilder(String factTable, String factTableAlias, Dialect dialect,
+    public static DefaultSqlBodyBuilder createBuilder(String factTable, String factTableAlias, RealSqlDialect dialect,
             SqlWarp sqlWarp) {
         return new DefaultSqlBodyBuilderImpl(factTable, factTableAlias, dialect, sqlWarp);
     }
@@ -197,12 +196,15 @@ public class DefaultSqlBuilder {
         private String factTable;
         @SuppressWarnings("unused")
         private String factTableAlias;
+        private SqlWarp sqlWarp;
 
-        public DefaultSqlBodyBuilderImpl(String factTable, String factTableAlias, Dialect dialect, SqlWarp sqlWarp) {
+        public DefaultSqlBodyBuilderImpl(String factTable, String factTableAlias, RealSqlDialect dialect,
+                SqlWarp sqlWarp) {
             super();
             this.factTable = factTable;
             this.factTableAlias = factTableAlias;
-            this.querySelect = SqlBuilderAction.createQuery(dialect, sqlWarp);
+            this.querySelect = SqlBuilderAction.createQuery(dialect);
+            this.sqlWarp = sqlWarp;
             this.queryJoinFragment = SqlBuilderAction.createFrom(querySelect, factTable, factTableAlias);
         }
 

@@ -7,7 +7,7 @@ import top.wboost.common.util.StringUtil;
 
 public class SqlParameterDecoder implements Decoder<String, String> {
 
-    final String pattern = "\\(\\{\\?(.*?)\\}\\)";
+    final String pattern = "\\$\\{-\\{\\?(.*?)\\}-\\}\\$";
 
     @Override
     public String decode(String sql) {

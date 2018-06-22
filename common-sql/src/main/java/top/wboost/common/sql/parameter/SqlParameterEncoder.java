@@ -6,7 +6,7 @@ public class SqlParameterEncoder implements Encoder<String, String> {
 
     @Override
     public String encode(String value) {
-        return "({?" + value + "})";
+        return "${-{?" + value + "}-}$";
     }
 
 }

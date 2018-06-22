@@ -1,4 +1,4 @@
-package top.wboost.common.sql.dialect;
+package top.wboost.common.sql.warp;
 
 import top.wboost.common.base.interfaces.Warpper;
 
@@ -9,8 +9,6 @@ public interface SqlWarp extends Warpper<String> {
     //public T warp(Object val, T t);
 
     public static SqlWarp defaultSqlWarp = new DefaultSqlWarp();
-
-    public String getParamterPattern();
 
     public String warpDate(Object val);
 

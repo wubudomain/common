@@ -18,20 +18,13 @@ import org.hibernate.hql.spi.id.local.AfterUseAction;
 import org.hibernate.hql.spi.id.local.LocalTemporaryTableBulkIdStrategy;
 import org.hibernate.internal.util.JdbcExceptionHelper;
 
+import top.wboost.common.sql.manager.SqlManager;
 import top.wboost.common.sql.parameter.AbstractRealSqlLimitHandler;
 import top.wboost.common.sql.parameter.SqlParameterEncoder;
 
 public class HiveDialect extends RealSqlDialect {
 
     private LimitHandler LIMIT_HANDLER;
-
-    /**
-     * Constructs a MySQLDialect
-     */
-    public HiveDialect(SqlParameterEncoder encoder) {
-        super(encoder);
-        initLimitHandler(encoder);
-    }
 
     private void initLimitHandler(SqlParameterEncoder encoder) {
         this.LIMIT_HANDLER = new AbstractRealSqlLimitHandler(encoder) {
@@ -53,8 +46,8 @@ public class HiveDialect extends RealSqlDialect {
     }
 
     public HiveDialect() {
-        super(new SqlParameterEncoder());
-        initLimitHandler(new SqlParameterEncoder());
+        super();
+        initLimitHandler(SqlManager.getEncoder());
     }
 
     @Override

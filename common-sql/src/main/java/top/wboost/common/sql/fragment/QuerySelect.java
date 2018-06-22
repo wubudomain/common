@@ -2,18 +2,17 @@ package top.wboost.common.sql.fragment;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 
-import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.spi.RowSelection;
 
 import top.wboost.common.base.page.BasePage;
-import top.wboost.common.sql.dialect.SqlWarp;
+import top.wboost.common.sql.dialect.RealSqlDialect;
 import top.wboost.common.sql.enums.SqlFunction;
-import top.wboost.common.util.StringUtil;
+import top.wboost.common.sql.manager.SqlManager;
+import top.wboost.common.sql.warp.SqlWarp;
 
 public class QuerySelect implements Fragment {
-    private Dialect dialect;
+    private RealSqlDialect dialect;
     private SqlWarp sqlWarp;
     private JoinFragment joins;
     private StringBuilder select = new StringBuilder();
@@ -60,7 +59,7 @@ public class QuerySelect implements Fragment {
         joins = new QueryJoinFragment(dialect, false);
     }*/
 
-    public QuerySelect(Dialect dialect, SqlWarp sqlWarp) {
+    public QuerySelect(RealSqlDialect dialect, SqlWarp sqlWarp) {
         this.dialect = dialect;
         this.sqlWarp = sqlWarp;
     }
@@ -240,13 +239,7 @@ public class QuerySelect implements Fragment {
 
     public String toRealQueryString() {
         String sql = toQueryString();
-        if (sqlWarp.getParamterPattern() != null) {
-            List<String> list = StringUtil.getPatternMattcherList(sql, sqlWarp.getParamterPattern(), 1);
-            for (String param : list) {
-                sql = sql.replaceFirst(sqlWarp.getParamterPattern(), param);
-            }
-        }
-        return sql;
+        return SqlManager.decode(sql);
     }
 
     private static void appendTokens(StringBuilder buf, String token) {

@@ -7,26 +7,18 @@ import java.util.List;
 import org.hibernate.annotations.common.util.StringHelper;
 import org.hibernate.sql.Template;
 
-import top.wboost.common.sql.dialect.DefaultSqlWarp;
-import top.wboost.common.sql.dialect.SqlWarp;
+import top.wboost.common.sql.manager.SqlManager;
 
 public class InFragment implements Fragment {
 
     public static final String NULL = "null";
     public static final String NOT_NULL = "not null";
-    public SqlWarp sqlWarp;
 
     private String columnName;
     private List<Object> values = new ArrayList<Object>();
 
     public InFragment() {
         super();
-        this.sqlWarp = new DefaultSqlWarp();
-    }
-
-    public InFragment(SqlWarp sqlWarp) {
-        super();
-        this.sqlWarp = sqlWarp;
     }
 
     /**
@@ -35,12 +27,12 @@ public class InFragment implements Fragment {
      * @return {@code this}, for method chaining
      */
     public InFragment addValue(Object value) {
-        values.add(sqlWarp.warp(value));
+        values.add(SqlManager.encode(SqlManager.getSqlWarp().warp(value)));
         return this;
     }
 
     public InFragment addValues(Object[] values) {
-        Collections.addAll(this.values, sqlWarp.warp(values));
+        Collections.addAll(this.values, SqlManager.encode(SqlManager.getSqlWarp().warp(values)));
         return this;
     }
 
