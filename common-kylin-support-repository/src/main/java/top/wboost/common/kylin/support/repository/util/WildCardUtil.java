@@ -3,8 +3,8 @@ package top.wboost.common.kylin.support.repository.util;
 import java.util.Map;
 
 import top.wboost.common.manager.DefaultWildCardManager;
-import top.wboost.common.sql.dialect.DefaultSqlWarp;
 import top.wboost.common.sql.manager.DefaultSqlWildCardManager;
+import top.wboost.common.sql.warp.DefaultSqlWarp;
 
 /**
  * 通配符统一为 ${-{ 内容{要替换的}内容  }-}$
