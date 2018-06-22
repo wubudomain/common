@@ -3,8 +3,8 @@ package top.wboost.common.boost.handler;
 import java.util.List;
 import java.util.Map;
 
-import top.wboost.common.sql.dialect.DefaultSqlWarp;
 import top.wboost.common.sql.manager.DefaultSqlWildCardManager;
+import top.wboost.common.sql.warp.DefaultSqlWarp;
 import top.wboost.common.util.JpaUtil;
 import top.wboost.common.utils.web.utils.ConvertUtil;
 
