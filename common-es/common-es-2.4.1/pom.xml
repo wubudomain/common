@@ -22,5 +22,10 @@
 		    <artifactId>elasticsearch</artifactId>
 		    <version>2.4.1</version>
 		</dependency>
+		<dependency>
+		    <groupId>top.wboost</groupId>
+		    <artifactId>common-sql</artifactId>
+		    <version>${project-group-version}</version>
+		</dependency>
 	</dependencies>
 </project>
