@@ -156,12 +156,14 @@ public class CodeMessageManager implements ApplicationListener<ContextClosedEven
                 int index = Integer.parseInt(replaceIndex);
                 if (index < replaceParams.length && index >= 0) {
                     message = message.replaceAll("\\{" + index + "\\}", replaceParams[index].toString());
+                } else {
+                    message = message.replaceAll("\\{" + index + "\\}", "");
                 }
             }
         } catch (Exception e) {
             log.error(" replace message error ,{}", e.getLocalizedMessage());
         }
-        return message;
+        return message.trim();
 
     }
 
