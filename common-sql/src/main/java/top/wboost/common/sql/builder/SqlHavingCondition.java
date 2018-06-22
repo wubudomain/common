@@ -60,7 +60,7 @@ public class SqlHavingCondition {
     public static SqlFunctionConditionFragment between(String tableAlias, String column, SqlFunction sqlFunction,
             Object lValue, Object rValue) {
         return between().setTableAlias(tableAlias).setSqlFunction(column, sqlFunction,
-                sqlWarp.warp(lValue) + " and " + sqlWarp.warp(rValue));
+                sqlWarp.warp(lValue) + " and " + sqlWarp.warp(rValue) + ":nowarp");
     }
 
     public static SqlFunctionConditionFragment like() {

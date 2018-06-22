@@ -43,8 +43,17 @@ public class SqlFunctionConditionFragment implements Fragment {
     }
 
     public String toFragmentString() {
+        String valuewarp = null;
+        if (value instanceof String) {
+            if (((String) value).endsWith(":nowarp")) {
+                valuewarp = value.toString().substring(0, value.toString().length() - 7);
+            }
+        }
+        if (valuewarp == null) {
+            valuewarp = sqlWarp.warp(value);
+        }
         return sqlFunction.getSqlFunctionFragment().toFragmentString(null, tableAlias + "." + column) + " " + this.op
-                + " " + sqlWarp.warp(value);
+                + " " + valuewarp;
     }
 
 }
