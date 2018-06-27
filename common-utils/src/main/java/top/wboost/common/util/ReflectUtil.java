@@ -251,4 +251,18 @@ public class ReflectUtil {
         return result.toArray(new Field[result.size()]);
     }
 
+    public static <T> T getFieldValue(Object obj, String fieldName, Class<T> valType) {
+        Field field = findField(obj.getClass(), fieldName);
+        if (field == null) {
+            return null;
+        }
+        field.setAccessible(true);
+        try {
+            return (T) field.get(obj);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }
