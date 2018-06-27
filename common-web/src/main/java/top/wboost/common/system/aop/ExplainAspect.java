@@ -38,7 +38,6 @@ import top.wboost.common.system.exception.SystemCodeException;
 import top.wboost.common.util.ResponseUtil;
 import top.wboost.common.utils.web.interfaces.context.EzWebApplicationListener;
 import top.wboost.common.utils.web.utils.HtmlUtil;
-import top.wboost.common.utils.web.utils.XmlWebApplicationContextUtil;
 
 /**
  * 控制层aop执行类
@@ -206,23 +205,22 @@ public class ExplainAspect implements Ordered, EzWebApplicationListener {
 
     @Override
     public void onWebApplicationEvent(ContextRefreshedEvent event) {
-        if (XmlWebApplicationContextUtil.getApplicationContext() == null) {
-            throw new RuntimeException(
-                    "XmlWebApplicationContextUtil ApplicationContext 不存在，请检查 XmlWebApplicationContextUtil 是否配置");
-        }
-        RequestMappingHandlerMapping mapping = XmlWebApplicationContextUtil.getBean(RequestMappingHandlerMapping.class);
-        Map<RequestMappingInfo, HandlerMethod> methodmMap = mapping.getHandlerMethods();
-        for (Map.Entry<RequestMappingInfo, HandlerMethod> methodEntry : methodmMap.entrySet()) {
-            //判断返回值是否为ResultEntity
-            Method doMethod = methodEntry.getValue().getMethod();
-            if (ResultEntity.class == doMethod.getReturnType()) {
-                //如果是则检查是否有@Explain注解,如没有则抛出异常，启动失败。
-                Explain explain = doMethod.getDeclaredAnnotation(Explain.class);
-                if (explain == null) {
-                    throw new SystemCodeException(SystemCode.NO_EXPLAIN, "方法未使用@Explain注解!请检查。method:" + doMethod);
+        Map<String, RequestMappingHandlerMapping> mappings = event.getApplicationContext()
+                .getBeansOfType(RequestMappingHandlerMapping.class, false, true);
+        mappings.forEach((beanId, mapping) -> {
+            Map<RequestMappingInfo, HandlerMethod> methodmMap = mapping.getHandlerMethods();
+            for (Map.Entry<RequestMappingInfo, HandlerMethod> methodEntry : methodmMap.entrySet()) {
+                //判断返回值是否为ResultEntity
+                Method doMethod = methodEntry.getValue().getMethod();
+                if (ResultEntity.class == doMethod.getReturnType()) {
+                    //如果是则检查是否有@Explain注解,如没有则抛出异常，启动失败。
+                    Explain explain = doMethod.getDeclaredAnnotation(Explain.class);
+                    if (explain == null) {
+                        throw new SystemCodeException(SystemCode.NO_EXPLAIN, "方法未使用@Explain注解!请检查。method:" + doMethod);
+                    }
                 }
             }
-        }
+        });
     }
 
 }

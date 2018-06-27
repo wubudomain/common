@@ -147,14 +147,14 @@ public class CodeMessageManager implements ApplicationListener<ContextClosedEven
     private static final String PATTERN_COMPILE = "\\{(.*?)\\}";
 
     private static String replaceMessage(String message, Object... params) {
-        if (params == null || message == null)
+        if (message == null)
             return message;
         try {
             Object[] replaceParams = params;
             List<String> replaceList = StringUtil.getPatternMattcherList(message, PATTERN_COMPILE, 1);
             for (String replaceIndex : replaceList) {
                 int index = Integer.parseInt(replaceIndex);
-                if (index < replaceParams.length && index >= 0) {
+                if (replaceParams != null && index < replaceParams.length && index >= 0) {
                     message = message.replaceAll("\\{" + index + "\\}", replaceParams[index].toString());
                 } else {
                     message = message.replaceAll("\\{" + index + "\\}", "");
