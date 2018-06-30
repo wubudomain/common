@@ -25,6 +25,7 @@ import org.apache.log4j.Logger;
 import org.springframework.web.multipart.MultipartFile;
 
 import top.wboost.common.base.enums.CharsetEnum;
+import top.wboost.common.util.SystemUtil;
 
 /**
  * 导入导出文件工具类
@@ -70,6 +71,31 @@ public class FileUtil {
             IOUtils.closeQuietly(bis);
             IOUtils.closeQuietly(outputStream);
         }
+    }
+
+    /**
+     * 导出相对于classes文件夹文件
+     * @param path
+     * @param bytes
+     */
+    public static void exportFileToClasspath(String path, byte[] bytes) {
+        String realPath = FileUtil.class.getResource("/").getPath() + path;
+        File createFile = new File(
+                realPath.replace("/", SystemUtil.FILE_SEPARATOR).replace("\\", SystemUtil.FILE_SEPARATOR));
+        exportFile(createFile, bytes);
+    }
+
+    /**
+     * 导出基于项目的文件
+     * @param path
+     * @param bytes
+     */
+    public static void exportFileToProject(String path, byte[] bytes) {
+        String filePath = FileUtil.class.getResource("/").getPath();
+        String realPath = new File(filePath).getParentFile().getParentFile().getPath() + path;
+        File createFile = new File(
+                realPath.replace("/", SystemUtil.FILE_SEPARATOR).replace("\\", SystemUtil.FILE_SEPARATOR));
+        exportFile(createFile, bytes);
     }
 
     /**
