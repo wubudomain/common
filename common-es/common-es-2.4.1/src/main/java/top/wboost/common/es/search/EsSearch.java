@@ -1,11 +1,16 @@
 package top.wboost.common.es.search;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder.Operator;
 
 import top.wboost.common.es.entity.BaseEsIndex;
@@ -21,18 +26,19 @@ public class EsSearch extends BaseEsIndex {
      * 默认查询类型,查出来的size与用户指定相同
      */
     private SearchType searchType = SearchType.QUERY_THEN_FETCH;
-    /**
-     * 必要查询内容
-     */
-    private Map<String, Set<String>> mustMap = new HashMap<>();
-    /**
-     * 必要查询内容
-     */
-    private Map<String, Set<String>> mustNotMap = new HashMap<>();
-    /**
-     * 需要查询内容(非必要)
-     */
-    private Map<String, Set<String>> shouldMap = new HashMap<>();
+
+    private Map<EsQueryType, Map<String, Set<String>>> queryMap = new HashMap<>();
+    private Map<EsQueryType, List<QueryBuilder>> specialMap = new HashMap<>();
+
+    {
+        queryMap.put(EsQueryType.MUST, new HashMap<>());
+        queryMap.put(EsQueryType.SHOULD, new HashMap<>());
+        queryMap.put(EsQueryType.MUST_NOT, new HashMap<>());
+        specialMap.put(EsQueryType.MUST, new ArrayList<>());
+        specialMap.put(EsQueryType.SHOULD, new ArrayList<>());
+        specialMap.put(EsQueryType.MUST_NOT, new ArrayList<>());
+    }
+
     /**
      * should至少匹配数量
      */
@@ -41,6 +47,18 @@ public class EsSearch extends BaseEsIndex {
      * 查询分词时使用模式(ES默认OR 本类默认AND),一般情况无需修改
      */
     private Operator operator = Operator.AND;
+
+    /**子文档MAP key:value  子文档名:子文档search**/
+    private Map<String, EsSearch> childs = new LinkedHashMap<>();
+
+    public EsSearch child(String type, EsSearch childSearch) {
+        this.childs.put(type, childSearch);
+        return this;
+    }
+
+    public Map<String, EsSearch> getChilds() {
+        return this.childs;
+    }
 
     public EsSearch(String index, String type, SearchType searchType) {
         super(index, type);
@@ -55,28 +73,60 @@ public class EsSearch extends BaseEsIndex {
         return this.must(key, val, Boolean.FALSE);
     }
 
-    /**
-     * 添加must条件
-     * @author jwSun
-     * @date 2017年4月24日 下午3:11:52
-     * @param key 属性名
-     * @param val 属性值
-     * @param cover 是否覆盖
-     * @return
-     */
     public EsSearch must(String key, String val, Boolean cover) {
-        if (this.mustMap.get(key) == null || cover) {
+        return putToMap(key, val, cover, getMustMap());
+    }
+
+    public SpecialBuilder special(EsQueryType esQueryType) {
+        return new SpecialBuilder(esQueryType, this);
+    }
+
+    public static class SpecialBuilder {
+        private EsQueryType esQueryType;
+        private List<QueryBuilder> queryBuilders;
+
+        protected void initSpecial(EsSearch esSearch) {
+            if (esSearch.specialMap == null) {
+                esSearch.specialMap = new HashMap<>();
+            }
+            if (!esSearch.specialMap.containsKey(esQueryType)) {
+                this.queryBuilders = new ArrayList<>();
+                esSearch.specialMap.put(esQueryType, this.queryBuilders);
+            } else {
+                this.queryBuilders = esSearch.specialMap.get(esQueryType);
+            }
+        }
+
+        public SpecialBuilder(EsQueryType esQueryType, EsSearch esSearch) {
+            super();
+            this.esQueryType = esQueryType;
+            initSpecial(esSearch);
+        }
+
+        public SpecialBuilder fuzzy(String key, Object val) {
+            this.queryBuilders.add(QueryBuilders.fuzzyQuery(key, val));
+            return this;
+        }
+
+        public SpecialBuilder regexp(String key, String regexp) {
+            this.queryBuilders.add(QueryBuilders.regexpQuery(key, regexp));
+            return this;
+        }
+    }
+
+    protected EsSearch putToMap(String key, String val, Boolean cover, Map<String, Set<String>> map) {
+        if (map.get(key) == null || cover) {
             Set<String> set = new HashSet<String>();
             set.add(val);
-            this.mustMap.put(key, set);
+            map.put(key, set);
         } else {
-            this.mustMap.get(key).add(val);
+            map.get(key).add(val);
         }
         return this;
     }
 
     public EsSearch mustAll(Map<String, Set<String>> mustMap) {
-        this.mustMap.putAll(mustMap);
+        getMustMap().putAll(mustMap);
         return this;
     }
 
@@ -84,28 +134,12 @@ public class EsSearch extends BaseEsIndex {
         return this.mustNot(key, val, Boolean.FALSE);
     }
 
-    /**
-     * 添加must条件
-     * @author jwSun
-     * @date 2017年4月24日 下午3:11:52
-     * @param key 属性名
-     * @param val 属性值
-     * @param cover 是否覆盖
-     * @return
-     */
     public EsSearch mustNot(String key, String val, Boolean cover) {
-        if (this.mustNotMap.get(key) == null || cover) {
-            Set<String> set = new HashSet<String>();
-            set.add(val);
-            this.mustNotMap.put(key, set);
-        } else {
-            this.mustNotMap.get(key).add(val);
-        }
-        return this;
+        return putToMap(key, val, cover, getMustNotMap());
     }
 
     public EsSearch mustNotAll(Map<String, Set<String>> mustMap) {
-        this.mustNotMap.putAll(mustMap);
+        getMustNotMap().putAll(mustMap);
         return this;
     }
 
@@ -114,18 +148,11 @@ public class EsSearch extends BaseEsIndex {
     }
 
     public EsSearch should(String key, String val, Boolean cover) {
-        if (this.shouldMap.get(key) == null || cover) {
-            Set<String> set = new HashSet<String>();
-            set.add(val);
-            this.shouldMap.put(key, set);
-        } else {
-            this.shouldMap.get(key).add(val);
-        }
-        return this;
+        return putToMap(key, val, cover, getShouldMap());
     }
 
     public EsSearch shouldAll(Map<String, Set<String>> shouldMap) {
-        this.shouldMap.putAll(shouldMap);
+        getShouldMap().putAll(shouldMap);
         return this;
     }
 
@@ -134,15 +161,19 @@ public class EsSearch extends BaseEsIndex {
     }
 
     public Map<String, Set<String>> getMustMap() {
-        return mustMap;
+        return this.queryMap.get(EsQueryType.MUST);
     }
 
     public Map<String, Set<String>> getMustNotMap() {
-        return mustNotMap;
+        return this.queryMap.get(EsQueryType.MUST_NOT);
     }
 
     public Map<String, Set<String>> getShouldMap() {
-        return shouldMap;
+        return this.queryMap.get(EsQueryType.SHOULD);
+    }
+
+    public Map<EsQueryType, List<QueryBuilder>> getSpecialMap() {
+        return this.specialMap;
     }
 
     public Integer getMinimumNumberShouldMatch() {
@@ -175,12 +206,6 @@ public class EsSearch extends BaseEsIndex {
 
     public void setSearchType(SearchType searchType) {
         this.searchType = searchType;
-    }
-
-    @Override
-    public String toString() {
-        return "EsSearch [searchType=" + searchType + ", mustMap=" + mustMap + ", shouldMap=" + shouldMap
-                + ", minimumNumberShouldMatch=" + minimumNumberShouldMatch + ", operator=" + operator + "]";
     }
 
 }

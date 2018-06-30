@@ -16,9 +16,11 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequestBuilder;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.HasChildQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.search.Scroll;
@@ -115,6 +117,35 @@ public class EsQueryAction {
                         boolQueryBuilder.should(QueryBuilders.queryStringQuery(val).defaultField(key)
                                 .defaultOperator(search.getOperator()));
                     });
+                });
+            }
+            if (search.getSpecialMap() != null) {
+                search.getSpecialMap().forEach((esQueryType, queryBuilders) -> {
+                    switch (esQueryType) {
+                    case MUST:
+                        queryBuilders.forEach(queryBuilder -> {
+                            boolQueryBuilder.must(queryBuilder);
+                        });
+                        break;
+                    case MUST_NOT:
+                        queryBuilders.forEach(queryBuilder -> {
+                            boolQueryBuilder.mustNot(queryBuilder);
+                        });
+                        break;
+                    case SHOULD:
+                        queryBuilders.forEach(queryBuilder -> {
+                            boolQueryBuilder.should(queryBuilder);
+                        });
+                        break;
+                    }
+                });
+            }
+            if (search.getChilds().size() != 0) {
+                search.getChilds().forEach((type, childSearch) -> {
+                    BoolQueryBuilder childQueryBuilder = getBoolQueryBuilder(childSearch);
+                    HasChildQueryBuilder child = QueryBuilders.hasChildQuery(type, childQueryBuilder);
+                    child.innerHit(new QueryInnerHitBuilder());
+                    boolQueryBuilder.must(child);
                 });
             }
             if (search.getMinimumNumberShouldMatch() != null)
@@ -248,6 +279,7 @@ public class EsQueryAction {
             BasePage queryPage) {
         try {
             SearchResponse response = builder.get();
+            log.info(builder.toString());
             SearchHits hits = response.getHits();
             List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
             hits.forEach((SearchHit searchHit) -> {

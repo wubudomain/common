@@ -9,6 +9,8 @@ import org.elasticsearch.common.settings.Settings;
 
 import top.wboost.common.es.entity.EsIndex;
 import top.wboost.common.es.entity.EsPut;
+import top.wboost.common.util.QuickHashMap;
+import top.wboost.common.util.RandomUtil;
 
 /**
  * ES改变数据工具类
@@ -66,7 +68,7 @@ public class EsChangeUtil extends AbstractEsUtil {
         }
     }
 
-    /*public static void main(String[] args) {
+    public static void main(String[] args) {
         EsPut esPut = new EsPut("test_abc", "abc");
         StringBuffer sb = new StringBuffer();
         for (int k = 0; k < 1000; k++) {
@@ -80,5 +82,5 @@ public class EsChangeUtil extends AbstractEsUtil {
             }
             EsChangeUtil.putToIndex(esPut);
         }
-    }*/
+    }
 }
