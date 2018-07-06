@@ -98,6 +98,21 @@ public class FileUtil {
         exportFile(createFile, bytes);
     }
 
+    public static String importFileFromProject(String path) {
+        String filePath = FileUtil.class.getResource("/").getPath();
+        String realPath = new File(filePath).getParentFile().getParentFile().getPath() + path;
+        File createFile = new File(
+                realPath.replace("/", SystemUtil.FILE_SEPARATOR).replace("\\", SystemUtil.FILE_SEPARATOR));
+        return importFile(createFile);
+    }
+
+    public static String importFileFromClasspath(String path) {
+        String realPath = FileUtil.class.getResource("/").getPath() + path;
+        File createFile = new File(
+                realPath.replace("/", SystemUtil.FILE_SEPARATOR).replace("\\", SystemUtil.FILE_SEPARATOR));
+        return importFile(createFile);
+    }
+
     /**
      * 导入文件数据，编码为 ISO-8859-1
      * @param @param path 文件地址
