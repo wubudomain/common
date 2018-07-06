@@ -30,6 +30,7 @@
   	</scm>
 	<modules>
 		<module>common-base</module>
+		<module>common-core</module>
 		<module>common-log</module>
 		<module>common-utils</module>
 		<module>common-exception</module>
@@ -159,35 +160,6 @@
 	<!-- profiles不会共享给子项目,但会给子项目此profiles的默认值 -->
 	<profiles>
 		<profile>
-			<!-- 本地开发环境 -->
-			<id>development</id>
-			<properties>
-				<profiles.active>development</profiles.active>
-				<deploy.url>http://host:port/manager/text</deploy.url>
-			</properties>
-			<activation>
-				<!-- 默认激活的 -->
-				<activeByDefault>true</activeByDefault>
-			</activation>
-		</profile>
-		<profile>
-			<!-- 测试环境 -->
-			<id>test</id>
-			<properties>
-				<profiles.active>test</profiles.active>
-				<deploy.url>http://host:port/manager/text</deploy.url>
-			</properties>
-		</profile>
-		<profile>
-			<!-- 生产环境 -->
-			<id>production</id>
-			<properties>
-				<profiles.active>production</profiles.active>
-				<deploy.url>http://host:port/manager/text</deploy.url>
-			</properties>
-		</profile>
-		
-		<profile>
             <id>release</id>
             <distributionManagement>
                 <snapshotRepository>
@@ -248,6 +220,24 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        
+        <profile>
+        	<id>chinaoly</id>
+        	<distributionManagement>
+				<snapshotRepository>
+					<id>nexus2</id>
+					<name>common-manager</name>
+					<url>http://192.168.16.181:8081/repository/chinaoly/</url>
+					<uniqueVersion>true</uniqueVersion>
+				</snapshotRepository>
+		
+				<repository>
+					<id>nexus2</id>
+					<name>User Porject Release</name>
+					<url>http://192.168.16.181:8081/repository/chinaoly/</url>
+				</repository>
+			</distributionManagement>
         </profile>
 	</profiles>
 	
@@ -314,21 +304,5 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-
-
-	<!-- <distributionManagement>
-		<snapshotRepository>
-			<id>nexus2</id>
-			<name>common-manager</name>
-			<url>http://192.168.16.181:8081/repository/chinaoly/</url>
-			<uniqueVersion>true</uniqueVersion>
-		</snapshotRepository>
-
-		<repository>
-			<id>nexus2</id>
-			<name>User Porject Release</name>
-			<url>http://192.168.16.181:8081/repository/chinaoly/</url>
-		</repository>
-	</distributionManagement> -->
 
 </project>
