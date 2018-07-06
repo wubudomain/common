@@ -1,6 +1,7 @@
 package top.wboost.common.es.search;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -9,11 +10,16 @@ import java.util.Map;
 import java.util.Set;
 
 import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.HasChildQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder.Operator;
+import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
 
 import top.wboost.common.es.entity.BaseEsIndex;
+import top.wboost.common.es.entity.EsFilter;
+import top.wboost.common.es.util.EsQueryAction;
 
 /**
  * ES基本查询实体类
@@ -28,15 +34,13 @@ public class EsSearch extends BaseEsIndex {
     private SearchType searchType = SearchType.QUERY_THEN_FETCH;
 
     private Map<EsQueryType, Map<String, Set<String>>> queryMap = new HashMap<>();
-    private Map<EsQueryType, List<QueryBuilder>> specialMap = new HashMap<>();
+    private Map<EsQueryType, List<List<QueryBuilder>>> specialMap = new HashMap<>();
+    private List<EsFilter> filters = new ArrayList<>();
 
     {
         queryMap.put(EsQueryType.MUST, new HashMap<>());
         queryMap.put(EsQueryType.SHOULD, new HashMap<>());
         queryMap.put(EsQueryType.MUST_NOT, new HashMap<>());
-        specialMap.put(EsQueryType.MUST, new ArrayList<>());
-        specialMap.put(EsQueryType.SHOULD, new ArrayList<>());
-        specialMap.put(EsQueryType.MUST_NOT, new ArrayList<>());
     }
 
     /**
@@ -51,15 +55,6 @@ public class EsSearch extends BaseEsIndex {
     /**子文档MAP key:value  子文档名:子文档search**/
     private Map<String, EsSearch> childs = new LinkedHashMap<>();
 
-    public EsSearch child(String type, EsSearch childSearch) {
-        this.childs.put(type, childSearch);
-        return this;
-    }
-
-    public Map<String, EsSearch> getChilds() {
-        return this.childs;
-    }
-
     public EsSearch(String index, String type, SearchType searchType) {
         super(index, type);
         this.searchType = searchType;
@@ -73,6 +68,15 @@ public class EsSearch extends BaseEsIndex {
         return this.must(key, val, Boolean.FALSE);
     }
 
+    public EsSearch filters(EsFilter... filters) {
+        this.filters.addAll(Arrays.asList(filters));
+        return this;
+    }
+
+    public List<EsFilter> getFilters() {
+        return this.filters;
+    }
+
     public EsSearch must(String key, String val, Boolean cover) {
         return putToMap(key, val, cover, getMustMap());
     }
@@ -83,7 +87,7 @@ public class EsSearch extends BaseEsIndex {
 
     public static class SpecialBuilder {
         private EsQueryType esQueryType;
-        private List<QueryBuilder> queryBuilders;
+        private List<List<QueryBuilder>> queryBuilders;
 
         protected void initSpecial(EsSearch esSearch) {
             if (esSearch.specialMap == null) {
@@ -103,13 +107,50 @@ public class EsSearch extends BaseEsIndex {
             initSpecial(esSearch);
         }
 
+        public SpecialBuilder child(String type, EsSearch childSearch) {
+            BoolQueryBuilder childQueryBuilder = EsQueryAction.getBoolQueryBuilder(childSearch);
+            HasChildQueryBuilder child = QueryBuilders.hasChildQuery(type, childQueryBuilder);
+            child.innerHit(new QueryInnerHitBuilder());
+            this.queryBuilders.add(initBuilderList(child));
+            return this;
+        }
+
+        private List<QueryBuilder> initBuilderList(QueryBuilder... builders) {
+            List<QueryBuilder> addList = new ArrayList<>();
+            Arrays.asList(builders).forEach(builder -> {
+                addList.add(builder);
+            });
+            return addList;
+        }
+
         public SpecialBuilder fuzzy(String key, Object val) {
-            this.queryBuilders.add(QueryBuilders.fuzzyQuery(key, val));
+            this.queryBuilders.add(initBuilderList(QueryBuilders.fuzzyQuery(key, val)));
             return this;
         }
 
         public SpecialBuilder regexp(String key, String regexp) {
-            this.queryBuilders.add(QueryBuilders.regexpQuery(key, regexp));
+            this.queryBuilders.add(initBuilderList(QueryBuilders.regexpQuery(key, regexp)));
+            return this;
+        }
+
+        public SpecialBuilder or(EsSearch... searchs) {
+            List<QueryBuilder> queryBuilders = new ArrayList<>();
+            Arrays.asList(searchs).forEach(search -> {
+                queryBuilders.add(EsQueryAction.getBoolQueryBuilder(search));
+            });
+            this.queryBuilders.add(queryBuilders);
+            return this;
+        }
+
+        public SpecialBuilder and(EsSearch... searchs) {
+            Arrays.asList(searchs).forEach(search -> {
+                this.queryBuilders.add(initBuilderList(EsQueryAction.getBoolQueryBuilder(search)));
+            });
+            return this;
+        }
+
+        public SpecialBuilder and(QueryBuilder queryBuilder) {
+            this.queryBuilders.add(initBuilderList(queryBuilder));
             return this;
         }
     }
@@ -172,7 +213,7 @@ public class EsSearch extends BaseEsIndex {
         return this.queryMap.get(EsQueryType.SHOULD);
     }
 
-    public Map<EsQueryType, List<QueryBuilder>> getSpecialMap() {
+    public Map<EsQueryType, List<List<QueryBuilder>>> getSpecialMap() {
         return this.specialMap;
     }
 

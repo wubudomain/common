@@ -6,6 +6,9 @@ import java.util.Map;
 import org.aopalliance.intercept.MethodInvocation;
 import org.elasticsearch.index.query.QueryBuilders;
 
+import com.alibaba.fastjson.JSONObject;
+
+import top.wboost.common.base.page.BasePage;
 import top.wboost.common.context.config.AutoProxy;
 import top.wboost.common.es.search.EsQueryType;
 import top.wboost.common.es.search.EsSearch;
@@ -30,12 +33,13 @@ public class EsRepositoryProxy implements AutoProxy {
     }
 
     public static void main(String[] args) {
-        EsSearch search = new EsSearch("order", "order");
-        search.special(EsQueryType.MUST).fuzzy("order_no", "1234");
-        EsSearch searchChild = new EsSearch("order", "order_detail");
-        search.child("order_detail", searchChild);
-        searchChild.special(EsQueryType.MUST).fuzzy("commodity", "香");
-        System.out.println(EsQueryUtil.querySimpleList(search, null));
+        EsSearch search = new EsSearch("trajx_znss_201806", "adm_gj");
+        EsSearch searchChild = new EsSearch("trajx_znss_201806", "adm_mac");
+        searchChild.must("mac", "C1-C4-E7-02-13-95");
+        EsSearch b = new EsSearch("t1", "t2").must("xxdz", "丰潭路萍水路南口");
+        EsSearch a = new EsSearch("t1", "t2").must("xxdz", "丰潭路萍水路北口");
+        search.special(EsQueryType.MUST).child("adm_mac", searchChild).or(a, b);
+        System.out.println(JSONObject.toJSONString(EsQueryUtil.querySimpleList(search, new BasePage(1, 2))));
     }
 
 }

@@ -1,6 +1,7 @@
 package top.wboost.common.es.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -16,11 +17,9 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequestBuilder;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.HasChildQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
-import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.search.Scroll;
@@ -61,7 +60,7 @@ public class EsQueryAction {
     public static final String TERMS_NAME = "count_show_result";
 
     /**
-     * 1.获得多条件查询builder
+     * 1.构建多条件查询builder
      * @date 2017年5月2日 下午3:47:16
      * @param search Es查询实体类
      * @param filters 大小过滤器
@@ -70,6 +69,9 @@ public class EsQueryAction {
     public static BoolQueryBuilder getBoolQueryBuilder(EsSearch search, EsFilter... filters) {
         try {
             BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+            List<EsFilter> filterList = search.getFilters();
+            filterList.addAll(Arrays.asList(filters));
+            filters = filterList.toArray(new EsFilter[filterList.size()]);
             if (filters != null && filters.length > 0) {
                 for (int i = 0; i < filters.length; i++) {
                     EsFilter filter = filters[i];
@@ -94,8 +96,6 @@ public class EsQueryAction {
             if (search.getMustMap().size() != 0) {
                 search.getMustMap().forEach((String key, Set<String> valSet) -> {
                     valSet.forEach((String val) -> {
-                        //boolQueryBuilder.must(QueryBuilders.termQuery(key, val.toLowerCase()));
-                        //boolQueryBuilder.must(QueryBuilders.termQuery(key, val));
                         boolQueryBuilder.must(QueryBuilders.queryStringQuery(val).defaultField(key)
                                 .defaultOperator(search.getOperator()));
                     });
@@ -112,8 +112,6 @@ public class EsQueryAction {
             if (search.getShouldMap().size() != 0) {
                 search.getShouldMap().forEach((String key, Set<String> valSet) -> {
                     valSet.forEach((String val) -> {
-                        //boolQueryBuilder.should(QueryBuilders.(key, val.toLowerCase()));
-                        //boolQueryBuilder.should(QueryBuilders.termQuery(key, val));
                         boolQueryBuilder.should(QueryBuilders.queryStringQuery(val).defaultField(key)
                                 .defaultOperator(search.getOperator()));
                     });
@@ -124,28 +122,50 @@ public class EsQueryAction {
                     switch (esQueryType) {
                     case MUST:
                         queryBuilders.forEach(queryBuilder -> {
-                            boolQueryBuilder.must(queryBuilder);
+                            QueryBuilder bool = null;
+                            if (queryBuilder.size() > 1) {
+                                BoolQueryBuilder bools = QueryBuilders.boolQuery();
+                                queryBuilder.forEach(build -> {
+                                    bools.should(build);
+                                });
+                                bool = bools;
+                            } else {
+                                bool = queryBuilder.get(0);
+                            }
+                            boolQueryBuilder.must(bool);
                         });
                         break;
                     case MUST_NOT:
                         queryBuilders.forEach(queryBuilder -> {
-                            boolQueryBuilder.mustNot(queryBuilder);
+                            QueryBuilder bool = null;
+                            if (queryBuilder.size() > 1) {
+                                BoolQueryBuilder bools = QueryBuilders.boolQuery();
+                                queryBuilder.forEach(build -> {
+                                    bools.should(build);
+                                });
+                                bool = bools;
+                            } else {
+                                bool = queryBuilder.get(0);
+                            }
+                            boolQueryBuilder.mustNot(bool);
                         });
                         break;
                     case SHOULD:
                         queryBuilders.forEach(queryBuilder -> {
-                            boolQueryBuilder.should(queryBuilder);
+                            QueryBuilder bool = null;
+                            if (queryBuilder.size() > 1) {
+                                BoolQueryBuilder bools = QueryBuilders.boolQuery();
+                                queryBuilder.forEach(build -> {
+                                    bools.should(build);
+                                });
+                                bool = bools;
+                            } else {
+                                bool = queryBuilder.get(0);
+                            }
+                            boolQueryBuilder.should(bool);
                         });
                         break;
                     }
-                });
-            }
-            if (search.getChilds().size() != 0) {
-                search.getChilds().forEach((type, childSearch) -> {
-                    BoolQueryBuilder childQueryBuilder = getBoolQueryBuilder(childSearch);
-                    HasChildQueryBuilder child = QueryBuilders.hasChildQuery(type, childQueryBuilder);
-                    child.innerHit(new QueryInnerHitBuilder());
-                    boolQueryBuilder.must(child);
                 });
             }
             if (search.getMinimumNumberShouldMatch() != null)
@@ -283,7 +303,7 @@ public class EsQueryAction {
             SearchHits hits = response.getHits();
             List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
             hits.forEach((SearchHit searchHit) -> {
-                result.add(searchHit.getSource());
+                result.add(getResultMap(searchHit));
             });
             return new EsResultEntity(result, hits.getTotalHits(), queryPage.getBeginNumber(), queryPage.getPageSize())
                     .setScrollId(response.getScrollId());
@@ -291,6 +311,52 @@ public class EsQueryAction {
             throw new EsSearchException(e);
         }
     }
+
+    private static Map<String, Object> getResultMap(SearchHit searchHit) {
+        Map<String, Object> mapSource = searchHit.getSource();
+        Map<String, SearchHits> innerHits = searchHit.getInnerHits();
+        if (innerHits != null) {
+            innerHits.forEach((childType, innerSearchHits) -> {
+                innerSearchHits.forEach(hit -> {
+                    mapSource.putAll(getResultMap(hit));
+                });
+            });
+        }
+        return mapSource;
+    }
+
+    /*private static SearchHitResult resolveResult(SearchHits hits) {
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        Map<String, SearchHitResult> innerHitsMap = new HashMap<>();
+        hits.forEach((SearchHit searchHit) -> {
+            Map<String, SearchHits> innerHits = searchHit.getInnerHits();
+            if (innerHits != null) {
+                innerHits.forEach((childType, innerSearchHits) -> {
+                    SearchHitResult innerResult = resolveResult(innerSearchHits);
+                    innerHitsMap.put(childType, innerResult);
+                });
+            }
+            result.add(searchHit.getSource());
+        });
+        return new SearchHitResult(hits, result, innerHitsMap);
+    }*/
+
+    /*@Data
+    public static class SearchHitResult {
+        SearchHits hits;
+        List<Map<String, Object>> result;
+        //childType:result
+        Map<String, SearchHitResult> innerHits;
+    
+        public SearchHitResult(SearchHits hits, List<Map<String, Object>> result,
+                Map<String, SearchHitResult> innerHits) {
+            super();
+            this.hits = hits;
+            this.result = result;
+            this.innerHits = innerHits;
+        }
+    
+    }*/
 
     /**
      * 获得聚合结果集
