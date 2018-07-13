@@ -41,6 +41,7 @@ import top.wboost.common.base.entity.RequestEntity;
 import top.wboost.common.base.enums.CharsetEnum;
 import top.wboost.common.log.util.LoggerUtil;
 import top.wboost.common.system.exception.ConnectionException;
+import top.wboost.common.utils.web.utils.FileUtil;
 
 /**
  * HttpClient工具类
@@ -218,6 +219,19 @@ public class HttpClientUtil {
             String body = EntityUtils.toString(responseEntity, CharsetEnum.UTF_8.getCharset());
             EntityUtils.consume(response.getEntity());
             return ResponseEntity.status(response.getStatusLine().getStatusCode()).body(body);
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+            throw new ConnectionException(request.toString(), e);
+        } finally {
+            request.releaseConnection();
+        }
+    }
+
+    public static byte[] executeDownload(HttpRequestBase request, HttpClient httpClient) {
+        try {
+            HttpResponse response = httpClient.execute(request);
+            HttpEntity responseEntity = response.getEntity();
+            return FileUtil.importFileBytes(responseEntity.getContent());
         } catch (Exception e) {
             log.error(e.getLocalizedMessage());
             throw new ConnectionException(request.toString(), e);
