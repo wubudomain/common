@@ -6,6 +6,7 @@ package top.wboost.common.utils.web.utils;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -185,6 +186,32 @@ public class FileUtil {
         }
 
         return stringBuffer.toString();
+    }
+
+    public static byte[] importFileBytes(File file) {
+        try {
+            return importFileBytes(new FileInputStream(file));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static byte[] importFileBytes(InputStream inputStream) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            int len = 0;
+            while ((len = inputStream.read()) != -1) {
+                bos.write(len);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+            IOUtils.closeQuietly(bos);
+        }
+        return bos.toByteArray();
     }
 
     public static String importFileNio(FileInputStream inputStream, CharsetEnum charset) {
