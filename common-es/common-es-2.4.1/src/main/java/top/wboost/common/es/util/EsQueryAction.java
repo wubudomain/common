@@ -17,9 +17,11 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequestBuilder;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.HasChildQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.search.Scroll;
@@ -27,6 +29,9 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.bucket.children.ChildrenBuilder;
+import org.elasticsearch.search.aggregations.bucket.children.InternalChildren;
 import org.elasticsearch.search.aggregations.bucket.terms.InternalTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
@@ -40,6 +45,7 @@ import top.wboost.common.es.entity.EsResultEntity;
 import top.wboost.common.es.exception.EsSearchException;
 import top.wboost.common.es.exception.NoSuchIndexException;
 import top.wboost.common.es.search.EsAggregationSearch;
+import top.wboost.common.es.search.EsQueryType;
 import top.wboost.common.es.search.EsSearch;
 import top.wboost.common.log.entity.Logger;
 import top.wboost.common.log.util.LoggerUtil;
@@ -119,53 +125,21 @@ public class EsQueryAction {
             }
             if (search.getSpecialMap() != null) {
                 search.getSpecialMap().forEach((esQueryType, queryBuilders) -> {
-                    switch (esQueryType) {
-                    case MUST:
-                        queryBuilders.forEach(queryBuilder -> {
-                            QueryBuilder bool = null;
-                            if (queryBuilder.size() > 1) {
-                                BoolQueryBuilder bools = QueryBuilders.boolQuery();
-                                queryBuilder.forEach(build -> {
-                                    bools.should(build);
-                                });
-                                bool = bools;
-                            } else {
-                                bool = queryBuilder.get(0);
-                            }
-                            boolQueryBuilder.must(bool);
-                        });
-                        break;
-                    case MUST_NOT:
-                        queryBuilders.forEach(queryBuilder -> {
-                            QueryBuilder bool = null;
-                            if (queryBuilder.size() > 1) {
-                                BoolQueryBuilder bools = QueryBuilders.boolQuery();
-                                queryBuilder.forEach(build -> {
-                                    bools.should(build);
-                                });
-                                bool = bools;
-                            } else {
-                                bool = queryBuilder.get(0);
-                            }
-                            boolQueryBuilder.mustNot(bool);
-                        });
-                        break;
-                    case SHOULD:
-                        queryBuilders.forEach(queryBuilder -> {
-                            QueryBuilder bool = null;
-                            if (queryBuilder.size() > 1) {
-                                BoolQueryBuilder bools = QueryBuilders.boolQuery();
-                                queryBuilder.forEach(build -> {
-                                    bools.should(build);
-                                });
-                                bool = bools;
-                            } else {
-                                bool = queryBuilder.get(0);
-                            }
-                            boolQueryBuilder.should(bool);
-                        });
-                        break;
-                    }
+                    addBuilders(boolQueryBuilder, esQueryType, queryBuilders);
+                });
+            }
+            if (search.getChilds().size() > 0) {
+                search.getChilds().forEach((esQueryType, searchType) -> {
+                    List<List<QueryBuilder>> builders = new ArrayList<>();
+                    searchType.forEach((type, childSearch) -> {
+                        BoolQueryBuilder childQueryBuilder = EsQueryAction.getBoolQueryBuilder(childSearch);
+                        HasChildQueryBuilder child = QueryBuilders.hasChildQuery(type, childQueryBuilder);
+                        child.innerHit(new QueryInnerHitBuilder());
+                        List<QueryBuilder> builder = new ArrayList<>(1);
+                        builder.add(child);
+                        builders.add(builder);
+                    });
+                    addBuilders(boolQueryBuilder, esQueryType, builders);
                 });
             }
             if (search.getMinimumNumberShouldMatch() != null)
@@ -173,6 +147,44 @@ public class EsQueryAction {
             return boolQueryBuilder;
         } catch (Exception e) {
             throw new EsSearchException(e);
+        }
+    }
+
+    private static QueryBuilder getBoolBuilder(List<QueryBuilder> queryBuilder) {
+        QueryBuilder bool = null;
+        if (queryBuilder.size() > 1) {
+            BoolQueryBuilder bools = QueryBuilders.boolQuery();
+            queryBuilder.forEach(build -> {
+                bools.should(build);
+            });
+            bool = bools;
+        } else {
+            bool = queryBuilder.get(0);
+        }
+        return bool;
+    }
+
+    protected static void addBuilders(BoolQueryBuilder boolQueryBuilder, EsQueryType esQueryType,
+            List<List<QueryBuilder>> queryBuilders) {
+        switch (esQueryType) {
+        case MUST:
+            queryBuilders.forEach(queryBuilder -> {
+                QueryBuilder bool = getBoolBuilder(queryBuilder);
+                boolQueryBuilder.must(bool);
+            });
+            break;
+        case MUST_NOT:
+            queryBuilders.forEach(queryBuilder -> {
+                QueryBuilder bool = getBoolBuilder(queryBuilder);
+                boolQueryBuilder.mustNot(bool);
+            });
+            break;
+        case SHOULD:
+            queryBuilders.forEach(queryBuilder -> {
+                QueryBuilder bool = getBoolBuilder(queryBuilder);
+                boolQueryBuilder.should(bool);
+            });
+            break;
         }
     }
 
@@ -271,7 +283,7 @@ public class EsQueryAction {
             esAggregationSearch.getOrderMap().forEach((String field, SortOrder order) -> {
                 builder.addSort(field, order);
             });
-            TermsBuilder termsBuilder = new TermsBuilder(TERMS_NAME).field(esAggregationSearch.getField())
+            TermsBuilder termsBuilder = new TermsBuilder(TERMS_NAME).field(esAggregationSearch.getAggs().getField())
                     .size(esAggregationSearch.getSize());
 
             if (esAggregationSearch.getInline() != null) {
@@ -281,8 +293,14 @@ public class EsQueryAction {
                 bucketSelectorBuilder.script(script);
                 termsBuilder.subAggregation(bucketSelectorBuilder);
             }
-
-            builder.addAggregation(termsBuilder);
+            AggregationBuilder<?> aggrs = null;
+            if (esAggregationSearch.getAggs().getType() != null) {
+                aggrs = new ChildrenBuilder(TERMS_NAME).childType(esAggregationSearch.getAggs().getType());
+                aggrs.subAggregation(termsBuilder);
+            } else {
+                aggrs = termsBuilder;
+            }
+            builder.addAggregation(aggrs);
         } catch (Exception e) {
             throw new EsSearchException(e);
         }
@@ -373,11 +391,15 @@ public class EsQueryAction {
             throw new RuntimeException("must invoke this before addAggregation method");
         }*/
         try {
-            log.debug(builder.toString());
+            log.info(builder.toString());
             SearchResponse response = builder.get();
             // 有序，从大->小
             Map<String, Long> aggregationMap = new LinkedHashMap<>();
             Aggregation aggregation = response.getAggregations().get(TERMS_NAME);
+            if (InternalChildren.class.isAssignableFrom(aggregation.getClass())) {
+                InternalChildren internalChildren = (InternalChildren) aggregation;
+                aggregation = internalChildren.getAggregations().get(TERMS_NAME);
+            }
             InternalTerms internalTerms = (InternalTerms) aggregation;
             List<Terms.Bucket> list = internalTerms.getBuckets();
             list.forEach((Terms.Bucket bucket) -> {

@@ -10,12 +10,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.elasticsearch.action.search.SearchType;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.HasChildQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder.Operator;
-import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
 
 import top.wboost.common.es.entity.BaseEsIndex;
 import top.wboost.common.es.entity.EsFilter;
@@ -35,6 +32,9 @@ public class EsSearch extends BaseEsIndex {
 
     private Map<EsQueryType, Map<String, Set<String>>> queryMap = new HashMap<>();
     private Map<EsQueryType, List<List<QueryBuilder>>> specialMap = new HashMap<>();
+    /**子文档MAP key:value  子文档名:子文档search**/
+    private Map<EsQueryType, Map<String, EsSearch>> childs = new LinkedHashMap<>();
+
     private List<EsFilter> filters = new ArrayList<>();
 
     {
@@ -51,9 +51,6 @@ public class EsSearch extends BaseEsIndex {
      * 查询分词时使用模式(ES默认OR 本类默认AND),一般情况无需修改
      */
     private Operator operator = Operator.AND;
-
-    /**子文档MAP key:value  子文档名:子文档search**/
-    private Map<String, EsSearch> childs = new LinkedHashMap<>();
 
     public EsSearch(String index, String type, SearchType searchType) {
         super(index, type);
@@ -88,6 +85,7 @@ public class EsSearch extends BaseEsIndex {
     public static class SpecialBuilder {
         private EsQueryType esQueryType;
         private List<List<QueryBuilder>> queryBuilders;
+        private Map<String, EsSearch> childSearch;
 
         protected void initSpecial(EsSearch esSearch) {
             if (esSearch.specialMap == null) {
@@ -99,6 +97,12 @@ public class EsSearch extends BaseEsIndex {
             } else {
                 this.queryBuilders = esSearch.specialMap.get(esQueryType);
             }
+            if (!esSearch.childs.containsKey(esQueryType)) {
+                this.childSearch = new HashMap<>();
+                esSearch.childs.put(esQueryType, this.childSearch);
+            } else {
+                this.childSearch = esSearch.childs.get(esQueryType);
+            }
         }
 
         public SpecialBuilder(EsQueryType esQueryType, EsSearch esSearch) {
@@ -108,10 +112,11 @@ public class EsSearch extends BaseEsIndex {
         }
 
         public SpecialBuilder child(String type, EsSearch childSearch) {
-            BoolQueryBuilder childQueryBuilder = EsQueryAction.getBoolQueryBuilder(childSearch);
-            HasChildQueryBuilder child = QueryBuilders.hasChildQuery(type, childQueryBuilder);
-            child.innerHit(new QueryInnerHitBuilder());
-            this.queryBuilders.add(initBuilderList(child));
+            if (this.childSearch.containsKey(type)) {
+                this.childSearch.get(type).merge(childSearch);
+            } else {
+                this.childSearch.put(type, childSearch);
+            }
             return this;
         }
 
@@ -164,6 +169,46 @@ public class EsSearch extends BaseEsIndex {
             map.get(key).add(val);
         }
         return this;
+    }
+
+    public void merge(EsSearch search) {
+        merge(this, search);
+    }
+
+    public EsSearch merge(EsSearch search1, EsSearch search2) {
+        search1.queryMap.forEach((esQueryType, propMap) -> {
+            Map<String, Set<String>> propMap2 = search2.queryMap.get(esQueryType);
+            if (propMap2 == null)
+                return;
+            propMap.forEach((name, valColl) -> {
+                if (propMap2.containsKey(name)) {
+                    valColl.addAll(propMap2.get(name));
+                }
+            });
+        });
+        search1.specialMap.forEach((esQueryType, queryBuilders) -> {
+            List<List<QueryBuilder>> queryBuilders2 = search2.specialMap.get(esQueryType);
+            if (queryBuilders2 == null)
+                return;
+            queryBuilders.addAll(queryBuilders2);
+        });
+        search1.filters.addAll(search2.filters);
+        search1.childs.forEach((esQueryType, typeMap) -> {
+            Map<String, EsSearch> typeMap2 = search2.childs.get(esQueryType);
+            if (typeMap2 == null)
+                return;
+            typeMap.forEach((type, childsearch) -> {
+                EsSearch childsearch2 = typeMap2.get(type);
+                if (childsearch2 == null)
+                    return;
+                childsearch.merge(childsearch2);
+            });
+        });
+        return search1;
+    }
+
+    public Map<EsQueryType, Map<String, EsSearch>> getChilds() {
+        return childs;
     }
 
     public EsSearch mustAll(Map<String, Set<String>> mustMap) {

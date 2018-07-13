@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.elasticsearch.search.sort.SortOrder;
 
+import lombok.Data;
 import top.wboost.common.es.entity.EsCountFilter;
 
 /**
@@ -14,10 +15,6 @@ import top.wboost.common.es.entity.EsCountFilter;
  */
 public class EsAggregationSearch extends EsSearch {
 
-    /**
-     * 聚合属性名
-     */
-    private String field;
     /**
      * 查询结果条数
      */
@@ -35,17 +32,32 @@ public class EsAggregationSearch extends EsSearch {
      */
     private EsCountFilter esCountFilter;
 
+    private AggsEntity aggs = new AggsEntity();
+
+    @Data
+    public static class AggsEntity {
+        // 聚合属性名
+        String field;
+        //若无type则为父查询
+        String type;
+    }
+
     public EsAggregationSearch(String index, String type) {
         super(index, type);
     }
 
     public EsAggregationSearch(String index, String type, String field) {
         super(index, type);
-        this.field = field;
+        this.aggs.setField(field);
     }
 
     public EsAggregationSearch setField(String field) {
-        this.field = field;
+        this.aggs.setField(field);
+        return this;
+    }
+
+    public EsAggregationSearch setType(String type) {
+        this.aggs.setType(type);
         return this;
     }
 
@@ -69,8 +81,8 @@ public class EsAggregationSearch extends EsSearch {
         return this;
     }
 
-    public String getField() {
-        return field;
+    public AggsEntity getAggs() {
+        return aggs;
     }
 
     public int getSize() {
