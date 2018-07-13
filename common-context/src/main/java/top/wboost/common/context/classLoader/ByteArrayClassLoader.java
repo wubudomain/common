@@ -1,8 +1,8 @@
 package top.wboost.common.context.classLoader;
 
-public class ByteClassLoader extends ClassLoader {
+public class ByteArrayClassLoader extends ClassLoader {
 
-    public ByteClassLoader() {
+    public ByteArrayClassLoader() {
     }
 
     public Class<?> defineClass(String name, byte[] data) {
