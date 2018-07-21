@@ -169,4 +169,18 @@ public class ConvertUtil {
         });
         return retList;
     }
+
+    public static <T> List<T> parseHibernateObjToList(Object source, Class<T> clazz, String[] fieldName) {
+        List<Object> sources = null;
+        if (source.getClass().isArray()) {
+            sources = Arrays.asList((Object[]) source);
+        } else {
+            sources = Arrays.asList(source);
+        }
+        List<T> details = new ArrayList<>();
+        ConvertUtil.parseObjToMap(sources, fieldName).forEach(one -> {
+            details.add(ConvertUtil.mapConvertToBean(one, clazz));
+        });
+        return details;
+    }
 }
