@@ -178,12 +178,13 @@ public class EsSearch extends BaseEsIndex {
     public EsSearch merge(EsSearch search1, EsSearch search2) {
         search1.queryMap.forEach((esQueryType, propMap) -> {
             Map<String, Set<String>> propMap2 = search2.queryMap.get(esQueryType);
-            if (propMap2 == null)
+            if (propMap2.size() == 0)
                 return;
-            propMap.forEach((name, valColl) -> {
-                if (propMap2.containsKey(name)) {
-                    valColl.addAll(propMap2.get(name));
+            propMap2.forEach((name, valColl) -> {
+                if (!propMap.containsKey(name)) {
+                    propMap.put(name, new HashSet<>());
                 }
+                propMap.get(name).addAll(valColl);
             });
         });
         search1.specialMap.forEach((esQueryType, queryBuilders) -> {
