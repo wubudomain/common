@@ -1,14 +1,5 @@
 package top.wboost.common.es.util;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.search.MultiSearchRequestBuilder;
@@ -16,11 +7,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequestBuilder;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.HasChildQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.index.query.support.QueryInnerHitBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
@@ -37,7 +24,6 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
 import org.elasticsearch.search.aggregations.pipeline.having.BucketSelectorBuilder;
 import org.elasticsearch.search.sort.SortOrder;
-
 import top.wboost.common.base.page.BasePage;
 import top.wboost.common.es.entity.EsCountFilter;
 import top.wboost.common.es.entity.EsFilter;
@@ -51,6 +37,8 @@ import top.wboost.common.log.entity.Logger;
 import top.wboost.common.log.util.LoggerUtil;
 import top.wboost.common.util.QuickHashMap;
 
+import java.util.*;
+
 /**
  * ES查询各步骤封装,推荐使用EsQueryUtil封装,否则要按步骤来
  * @author jwSun
@@ -58,12 +46,11 @@ import top.wboost.common.util.QuickHashMap;
  */
 public class EsQueryAction {
 
-    private static Logger log = LoggerUtil.getLogger(EsQueryAction.class);
-
     /**
      * 聚合名
      */
     public static final String TERMS_NAME = "count_show_result";
+    private static Logger log = LoggerUtil.getLogger(EsQueryAction.class);
 
     /**
      * 1.构建多条件查询builder
@@ -130,6 +117,9 @@ public class EsQueryAction {
             }
             if (search.getChilds().size() > 0) {
                 search.getChilds().forEach((esQueryType, searchType) -> {
+                    if (searchType == null) {
+                        return;
+                    }
                     List<List<QueryBuilder>> builders = new ArrayList<>();
                     searchType.forEach((type, childSearch) -> {
                         BoolQueryBuilder childQueryBuilder = EsQueryAction.getBoolQueryBuilder(childSearch);
@@ -166,6 +156,8 @@ public class EsQueryAction {
 
     protected static void addBuilders(BoolQueryBuilder boolQueryBuilder, EsQueryType esQueryType,
             List<List<QueryBuilder>> queryBuilders) {
+        if (queryBuilders == null)
+            return;
         switch (esQueryType) {
         case MUST:
             queryBuilders.forEach(queryBuilder -> {
