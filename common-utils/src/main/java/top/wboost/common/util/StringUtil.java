@@ -14,9 +14,14 @@ import java.util.regex.Pattern;
  */
 public class StringUtil {
 
+	private final static String HEX_STRING = "0123456789ABCDEF";
+	// private final static byte[] HEX_BYTE = HEX_STRING.getBytes();
+	private static final char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
+			'f'};
+
 	/**
 	 * 正则表达式取文本
-	 * 
+	 *
 	 * @param text
 	 *            文本
 	 * @param patternCompile
@@ -35,7 +40,7 @@ public class StringUtil {
 
 	/**
 	 * 正则表达式单行取文本,group 为整数型，0为整个字符串，1为第一个括号，2为第二个...
-	 * 
+	 *
 	 * @param text
 	 *            文本
 	 * @param patternCompile
@@ -56,7 +61,7 @@ public class StringUtil {
 
 	/**
 	 * 正则表达式多行模式取文本,group 为整数型，0为整个字符串，1为第一个括号，2为第二个...
-	 * 
+	 *
 	 * @param text
 	 *            文本
 	 * @param patternCompile
@@ -76,7 +81,7 @@ public class StringUtil {
 
 	/**
 	 * 十六进制转为字符串
-	 * 
+	 *
 	 * @author sjw
 	 * @date 2016年10月27日 下午1:46:06
 	 * @param value
@@ -98,11 +103,6 @@ public class StringUtil {
 		}
 		return value;
 	}
-
-	private final static String HEX_STRING = "0123456789ABCDEF";
-	// private final static byte[] HEX_BYTE = HEX_STRING.getBytes();
-	private static final char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
-			'e', 'f' };
 
 	/**
 	 * 字节数组 转换为 十六进制字符串,小写
