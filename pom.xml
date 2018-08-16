@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>top.wboost</groupId>
 	<artifactId>common</artifactId>
@@ -30,7 +31,7 @@
   	</scm>
 	<modules>
 		<module>common-base</module>
-		<module>common-core</module>
+		<!--<module>common-core</module>-->
 		<module>common-log</module>
 		<module>common-utils</module>
 		<module>common-exception</module>
@@ -39,13 +40,14 @@
 		<module>common-web</module>
 		<module>common-cache</module>
 		<module>common-distributed</module>
-		<!-- <module>common-message-queue</module> -->
+		<module>common-message-queue</module>
 		<module>common-es</module>
 		<module>common-sql</module>
 		<module>common-kylin</module>
 		<module>common-kylin-support-repository</module>
 		<module>common-boost</module>
 		<module>common-boot</module>
+		<module>common-netty</module>
   </modules>
 
 	<properties>
