@@ -1,12 +1,11 @@
 package top.wboost.common.es.search;
 
+import lombok.Data;
+import org.elasticsearch.search.sort.SortOrder;
+import top.wboost.common.es.entity.EsCountFilter;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import org.elasticsearch.search.sort.SortOrder;
-
-import lombok.Data;
-import top.wboost.common.es.entity.EsCountFilter;
 
 /**
  * Es聚合查询类
@@ -34,14 +33,6 @@ public class EsAggregationSearch extends EsSearch {
 
     private AggsEntity aggs = new AggsEntity();
 
-    @Data
-    public static class AggsEntity {
-        // 聚合属性名
-        String field;
-        //若无type则为父查询
-        String type;
-    }
-
     public EsAggregationSearch(String index, String type) {
         super(index, type);
     }
@@ -61,26 +52,6 @@ public class EsAggregationSearch extends EsSearch {
         return this;
     }
 
-    public EsAggregationSearch setSize(int size) {
-        this.size = size;
-        return this;
-    }
-
-    public EsAggregationSearch setInline(String inline) {
-        this.inline = inline;
-        return this;
-    }
-
-    public EsAggregationSearch setOrderMap(Map<String, SortOrder> orderMap) {
-        this.orderMap = orderMap;
-        return this;
-    }
-
-    public EsAggregationSearch setEsCountFilter(EsCountFilter esCountFilter) {
-        this.esCountFilter = esCountFilter;
-        return this;
-    }
-
     public AggsEntity getAggs() {
         return aggs;
     }
@@ -89,16 +60,43 @@ public class EsAggregationSearch extends EsSearch {
         return size;
     }
 
+    public EsAggregationSearch setSize(int size) {
+        this.size = size;
+        return this;
+    }
+
     public String getInline() {
         return inline;
+    }
+
+    public EsAggregationSearch setInline(String inline) {
+        this.inline = inline;
+        return this;
     }
 
     public Map<String, SortOrder> getOrderMap() {
         return orderMap;
     }
 
+    public EsAggregationSearch setOrderMap(Map<String, SortOrder> orderMap) {
+        this.orderMap = orderMap;
+        return this;
+    }
+
     public EsCountFilter getEsCountFilter() {
         return esCountFilter;
+    }
+
+    public EsAggregationSearch setEsCountFilter(EsCountFilter esCountFilter) {
+        this.esCountFilter = esCountFilter;
+        return this;
+    }
+
+    @Data public static class AggsEntity {
+        // 聚合属性名
+        String field;
+        //若无type则为父查询
+        String type;
     }
 
 }

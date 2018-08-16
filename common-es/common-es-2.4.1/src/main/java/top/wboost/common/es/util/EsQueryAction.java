@@ -89,24 +89,54 @@ public class EsQueryAction {
             if (search.getMustMap().size() != 0) {
                 search.getMustMap().forEach((String key, Set<String> valSet) -> {
                     valSet.forEach((String val) -> {
-                        boolQueryBuilder.must(QueryBuilders.queryStringQuery(val).defaultField(key)
-                                .defaultOperator(search.getOperator()));
+                        boolean useDefault = true;
+                        for (EsSearch.BuilderFilter builderFilter : search.getBuilderFilters()) {
+                            if (builderFilter.support(EsQueryType.MUST, key, val)) {
+                                boolQueryBuilder.must(builderFilter.apply(EsQueryType.MUST, key, val));
+                                useDefault = false;
+                                break;
+                            }
+                        }
+                        if (useDefault) {
+                            boolQueryBuilder.must(QueryBuilders.queryStringQuery(val).defaultField(key)
+                                    .defaultOperator(search.getOperator()));
+                        }
                     });
                 });
             }
             if (search.getMustNotMap().size() != 0) {
                 search.getMustNotMap().forEach((String key, Set<String> valSet) -> {
                     valSet.forEach((String val) -> {
-                        boolQueryBuilder.mustNot(QueryBuilders.queryStringQuery(val).defaultField(key)
-                                .defaultOperator(search.getOperator()));
+                        boolean useDefault = true;
+                        for (EsSearch.BuilderFilter builderFilter : search.getBuilderFilters()) {
+                            if (builderFilter.support(EsQueryType.MUST, key, val)) {
+                                boolQueryBuilder.mustNot(builderFilter.apply(EsQueryType.MUST, key, val));
+                                useDefault = false;
+                                break;
+                            }
+                        }
+                        if (useDefault) {
+                            boolQueryBuilder.mustNot(QueryBuilders.queryStringQuery(val).defaultField(key)
+                                    .defaultOperator(search.getOperator()));
+                        }
                     });
                 });
             }
             if (search.getShouldMap().size() != 0) {
                 search.getShouldMap().forEach((String key, Set<String> valSet) -> {
                     valSet.forEach((String val) -> {
-                        boolQueryBuilder.should(QueryBuilders.queryStringQuery(val).defaultField(key)
-                                .defaultOperator(search.getOperator()));
+                        boolean useDefault = true;
+                        for (EsSearch.BuilderFilter builderFilter : search.getBuilderFilters()) {
+                            if (builderFilter.support(EsQueryType.MUST, key, val)) {
+                                boolQueryBuilder.should(builderFilter.apply(EsQueryType.MUST, key, val));
+                                useDefault = false;
+                                break;
+                            }
+                        }
+                        if (useDefault) {
+                            boolQueryBuilder.should(QueryBuilders.queryStringQuery(val).defaultField(key)
+                                    .defaultOperator(search.getOperator()));
+                        }
                     });
                 });
             }

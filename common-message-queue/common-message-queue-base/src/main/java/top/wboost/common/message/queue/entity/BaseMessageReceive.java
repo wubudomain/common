@@ -7,6 +7,8 @@ package top.wboost.common.message.queue.entity;
  */
 public interface BaseMessageReceive {
 
+    public Object getBody();
+
     public void setBody(Object body);
 
 }
