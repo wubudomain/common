@@ -1,17 +1,6 @@
 package top.wboost.common.util;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.UnknownHostException;
-
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLHandshakeException;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.NoHttpResponseException;
+import org.apache.http.*;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.config.RequestConfig;
@@ -35,7 +24,6 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-
 import top.wboost.common.base.entity.HttpRequestBuilder;
 import top.wboost.common.base.entity.RequestEntity;
 import top.wboost.common.base.enums.CharsetEnum;
@@ -43,20 +31,18 @@ import top.wboost.common.log.util.LoggerUtil;
 import top.wboost.common.system.exception.ConnectionException;
 import top.wboost.common.utils.web.utils.FileUtil;
 
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.UnknownHostException;
+
 /**
  * HttpClient工具类
  * @author jwSun
  * @date 2017年6月14日 上午11:00:34
  */
 public class HttpClientUtil {
-
-    private static Logger log = LoggerUtil.getLogger(HttpClientUtil.class);
-    //连接池
-    private static final PoolingHttpClientConnectionManager poolManager;
-    //请求重试处理
-    private static final HttpRequestRetryHandler httpRequestRetryHandler;
-    //请求配置
-    private static final RequestConfig requestConfig;
 
     // 最大连接数
     public final static int MAX_TOTAL_CONNECTIONS = 100;
@@ -70,6 +56,20 @@ public class HttpClientUtil {
     public final static int READ_TIMEOUT = 10000;// 10s
     //允许跳转
     public final static boolean REDIRECTS_ENABLED = true;
+    //连接池
+    private static final PoolingHttpClientConnectionManager poolManager;
+    //请求重试处理
+    private static final HttpRequestRetryHandler httpRequestRetryHandler;
+    //请求配置
+    private static final RequestConfig requestConfig;
+    private static Logger log = LoggerUtil.getLogger(HttpClientUtil.class);
+    private static CloseableHttpClient httpClient = getNewHttpClient();
+
+    static {
+        poolManager = getConnectionManager();
+        httpRequestRetryHandler = getHttpRequestRetryHandler();
+        requestConfig = getRequestConfig();
+    }
 
     public static PoolingHttpClientConnectionManager getConnectionManager() {
         ConnectionSocketFactory plainsf = PlainConnectionSocketFactory.getSocketFactory();
@@ -88,25 +88,25 @@ public class HttpClientUtil {
     public static HttpRequestRetryHandler getHttpRequestRetryHandler() {
         return new HttpRequestRetryHandler() {
             public boolean retryRequest(IOException exception, int executionCount, HttpContext context) {
-                if (executionCount >= 5) {// 如果已经重试了5次，就放弃                    
+                if (executionCount >= 5) {// 如果已经重试了5次，就放弃
                     return false;
                 }
-                if (exception instanceof NoHttpResponseException) {// 如果服务器丢掉了连接，那么就重试                    
+                if (exception instanceof NoHttpResponseException) {// 如果服务器丢掉了连接，那么就重试
                     return true;
                 }
-                if (exception instanceof SSLHandshakeException) {// 不要重试SSL握手异常                    
+                if (exception instanceof SSLHandshakeException) {// 不要重试SSL握手异常
                     return false;
                 }
-                if (exception instanceof InterruptedIOException) {// 超时                    
+                if (exception instanceof InterruptedIOException) {// 超时
                     return false;
                 }
-                if (exception instanceof UnknownHostException) {// 目标服务器不可达                    
+                if (exception instanceof UnknownHostException) {// 目标服务器不可达
                     return false;
                 }
-                if (exception instanceof ConnectTimeoutException) {// 连接被拒绝                    
+                if (exception instanceof ConnectTimeoutException) {// 连接被拒绝
                     return false;
                 }
-                if (exception instanceof SSLException) {// ssl握手异常                    
+                if (exception instanceof SSLException) {// ssl握手异常
                     return false;
                 }
                 HttpClientContext clientContext = HttpClientContext.adapt(context);
@@ -124,19 +124,11 @@ public class HttpClientUtil {
         return RequestConfig.custom().setConnectTimeout(CONNECT_TIMEOUT).setRedirectsEnabled(REDIRECTS_ENABLED).build();
     }
 
-    static {
-        poolManager = getConnectionManager();
-        httpRequestRetryHandler = getHttpRequestRetryHandler();
-        requestConfig = getRequestConfig();
-    }
-
     public static CloseableHttpClient getNewHttpClient() {
         CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(poolManager)
                 .setRetryHandler(httpRequestRetryHandler).setDefaultRequestConfig(requestConfig).build();
         return httpClient;
     }
-
-    private static CloseableHttpClient httpClient = getNewHttpClient();
 
     public static CloseableHttpClient getHttpClient() {
         return httpClient;
