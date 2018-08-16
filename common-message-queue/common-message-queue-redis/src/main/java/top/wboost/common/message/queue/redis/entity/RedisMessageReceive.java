@@ -6,7 +6,7 @@ public class RedisMessageReceive implements BaseMessageReceive {
 
     private Object body;
 
-    public Object setBody() {
+    public Object getBody() {
         return body;
     }
 
